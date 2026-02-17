@@ -13,6 +13,7 @@ import {
   activity as activityTheme,
 } from "../../src/theme";
 import { usePortfolioStore } from "../../src/store/portfolioStore";
+import { useNotificationStore } from "../../src/store/notificationStore";
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
@@ -51,8 +52,8 @@ export default function WalletHomeScreen() {
     dailyChangePct,
     hp,
     streak,
-    notificationCount,
   } = usePortfolioStore();
+  const notificationCount = useNotificationStore((s) => s.unreadCount());
 
   const { whole, cents } = formatDollars(totalValue);
   const hpPct = `${hp}%` as const;
@@ -196,7 +197,7 @@ export default function WalletHomeScreen() {
               style={activityTheme.row}
               onPress={
                 item.isSuspicious
-                  ? () => router.push("/scam-scenario" as never)
+                  ? () => router.push("/scenario/fake-airdrop" as never)
                   : undefined
               }
             >

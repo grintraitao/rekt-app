@@ -45,7 +45,6 @@ type PortfolioState = {
   hp: number;
   maxHp: number;
   streak: number;
-  notificationCount: number;
 };
 
 export const usePortfolioStore = create<PortfolioState>(() => ({
@@ -134,5 +133,4 @@ export const usePortfolioStore = create<PortfolioState>(() => ({
   hp: 80,
   maxHp: 100,
   streak: 13,
-  notificationCount: 3,
 }));
