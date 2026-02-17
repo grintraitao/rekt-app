@@ -97,8 +97,7 @@ export default function OnboardingScreen() {
         animated: true,
       });
     } else {
-      // Last slide → go to Character Select (falls back to tabs if not yet built)
-      router.replace("/(tabs)");
+      router.replace("/character-select");
     }
   };
 
