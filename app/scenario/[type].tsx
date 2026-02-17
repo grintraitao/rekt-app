@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -19,15 +19,18 @@ import {
   type ChatMessage,
   type ScenarioChoice,
 } from "../../src/store/scenarioStore";
+import ApprovalPopup from "../../src/components/ApprovalPopup";
 
 // ── Scenario data registry ────────────────────────────────────────────────
 // Maps scam type → scenario data. For now just one; more added per chapter.
 import fakeSupport from "../../src/data/scenarios/ch1-fake-support-dm.json";
+import approvalScam from "../../src/data/scenarios/ch1-approval-scam.json";
 
 const SCENARIO_MAP: Record<string, typeof fakeSupport> = {
   phishing: fakeSupport,
   "fake-airdrop": fakeSupport, // placeholder — reuse until real data exists
   impersonation: fakeSupport,
+  "approval-scam": approvalScam as unknown as typeof fakeSupport,
 };
 
 /* ── Chat bubble ───────────────────────────────────────────────────────────── */
@@ -148,9 +151,20 @@ export default function ScamScenarioScreen() {
     return () => clearTimeout(timer);
   }, [outcome]);
 
-  // Current step's choices
+  // Current step's choices & approval data
   const currentStep = scenario?.steps.find((s) => s.id === currentStepId);
   const choices = currentStep?.choices ?? [];
+  const approvalData = currentStep?.approval;
+  const [showApproval, setShowApproval] = useState(false);
+
+  // Show approval popup when step has approval data
+  useEffect(() => {
+    if (approvalData && showChoices && !outcome) {
+      const timer = setTimeout(() => setShowApproval(true), 400);
+      return () => clearTimeout(timer);
+    }
+    setShowApproval(false);
+  }, [currentStepId, approvalData, showChoices, outcome]);
 
   // Fallback if no scenario data found
   if (!scenario) {
@@ -226,8 +240,8 @@ export default function ScamScenarioScreen() {
         )}
       </ScrollView>
 
-      {/* ── Choices ──────────────────────────────────────────────────── */}
-      {showChoices && !outcome && (
+      {/* ── Choices (hidden when approval popup is active) ─────────── */}
+      {showChoices && !outcome && !approvalData && (
         <View style={styles.choicesContainer}>
           <Text style={styles.choicesLabel}>YOUR RESPONSE:</Text>
           {choices.map((c) => (
@@ -240,6 +254,33 @@ export default function ScamScenarioScreen() {
             />
           ))}
         </View>
+      )}
+
+      {/* ── Approval Popup ─────────────────────────────────────────── */}
+      {approvalData && (
+        <ApprovalPopup
+          visible={showApproval}
+          type={approvalData.type as "safe" | "scam"}
+          details={approvalData}
+          onApprove={() => {
+            setShowApproval(false);
+            if (approvalData.type === "scam") {
+              selectChoice({ id: "approve-scam", text: "Approve ✓", outcome: "rekt" });
+            } else {
+              // Safe approval — proceed back to wallet
+              reset();
+              router.replace("/(tabs)" as never);
+            }
+          }}
+          onReject={() => {
+            setShowApproval(false);
+            if (approvalData.type === "scam") {
+              selectChoice({ id: "reject-scam", text: "Reject", outcome: "survived" });
+            }
+            // Safe rejection — stay on current screen, go back to previous step
+            // (dismiss popup, user can navigate back)
+          }}
+        />
       )}
     </View>
   );

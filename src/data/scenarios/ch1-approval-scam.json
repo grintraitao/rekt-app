@@ -1,0 +1,72 @@
+{
+  "id": "ch1-approval-scam",
+  "chapter": 1,
+  "difficulty": 2,
+  "type": "approval-scam",
+  "title": "Token Approval",
+  "subtitle": "Contract interaction request",
+  "icon": "📝",
+  "npcAvatar": "🤖",
+  "npcName": "DeFi Protocol",
+  "steps": [
+    {
+      "id": "intro",
+      "messages": [
+        { "sender": "system", "text": "📝 New DeFi interaction request" },
+        { "sender": "npc", "text": "Welcome to UniSwap! You have a pending token swap. Please approve the transaction to continue." }
+      ],
+      "choices": [
+        { "id": "approve-safe", "text": "📝 Review & approve the swap", "outcome": "clue", "next": "safe-approval" },
+        { "id": "check-airdrop", "text": "🎁 Wait — check that free airdrop first", "outcome": "clue", "next": "scam-airdrop" },
+        { "id": "sensei", "text": "🧠 Ask Sensei", "outcome": "hint" }
+      ]
+    },
+    {
+      "id": "safe-approval",
+      "messages": [
+        { "sender": "system", "text": "📋 Transaction details loaded" },
+        { "sender": "npc", "text": "Standard swap: 100 USDC for 0.05 ETH on Uniswap. Gas fee: $2.40. Review the approval below." }
+      ],
+      "choices": [],
+      "approval": {
+        "type": "safe",
+        "actionTitle": "Swap on Uniswap",
+        "amount": "100 USDC",
+        "contract": "0x7a25...3f8b",
+        "verified": true,
+        "gas": "$2.40"
+      }
+    },
+    {
+      "id": "scam-airdrop",
+      "messages": [
+        { "sender": "system", "text": "🎁 Airdrop claim page opened" },
+        { "sender": "npc", "text": "Congrats! You've been selected for an exclusive airdrop! Just approve this quick transaction to claim your free tokens." }
+      ],
+      "choices": [],
+      "approval": {
+        "type": "scam",
+        "actionTitle": "Claim Airdrop",
+        "amount": "♾️ UNLIMITED",
+        "contract": "0x9f3a...1c2d",
+        "verified": false,
+        "gas": "$0.80"
+      }
+    }
+  ],
+  "hints": [
+    "Legitimate swaps show exact token amounts — watch out for UNLIMITED approvals.",
+    "Always verify the contract address. Unverified contracts with low gas fees are red flags."
+  ],
+  "education": {
+    "title": "Unlimited Token Approval",
+    "summary": "Scammers trick you into granting unlimited access to your tokens via malicious contract approvals.",
+    "redFlags": [
+      "🚩 UNLIMITED token approval amount",
+      "🚩 Unverified contract address",
+      "🚩 Suspiciously low gas fees",
+      "🚩 \"Free\" airdrop requiring contract approval"
+    ],
+    "tip": "Always check the approval amount and contract verification before signing any transaction."
+  }
+}

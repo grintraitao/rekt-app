@@ -18,10 +18,20 @@ export type ScenarioChoice = {
   next?: string; // step ID to advance to for "clue" outcomes
 };
 
+export type ApprovalPopupData = {
+  type: "safe" | "scam";
+  actionTitle: string;
+  amount: string;
+  contract: string;
+  verified: boolean;
+  gas: string;
+};
+
 export type ScenarioStep = {
   id: string;
   messages: ScenarioMessage[];
   choices: ScenarioChoice[];
+  approval?: ApprovalPopupData;
 };
 
 export type ScenarioEducation = {
