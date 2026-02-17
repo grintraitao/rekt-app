@@ -107,6 +107,7 @@ export default function ScamScenarioScreen() {
 
   const {
     scenario,
+    currentStepId,
     chatHistory,
     showChoices,
     outcome,
@@ -148,9 +149,7 @@ export default function ScamScenarioScreen() {
   }, [outcome]);
 
   // Current step's choices
-  const currentStep = scenario?.steps.find(
-    (s) => s.id === useScenarioStore.getState().currentStepId,
-  );
+  const currentStep = scenario?.steps.find((s) => s.id === currentStepId);
   const choices = currentStep?.choices ?? [];
 
   // Fallback if no scenario data found
