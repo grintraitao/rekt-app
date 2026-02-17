@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REKT — Complete Wireframes v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --green: #00ff88;
+    --green-dim: #00ff8833;
+    --red: #ff3366;
+    --red-dim: #ff336633;
+    --purple: #8b5cf6;
+    --yellow: #ffd700;
+    --cyan: #00d4ff;
+    --orange: #ff8c00;
+    --text: #e8e8f0;
+    --text-dim: #666680;
+    --text-mid: #9999aa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Outfit', sans-serif; min-height: 100vh;
+  }
+
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,15,0.92); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .top-bar h1 { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--green); letter-spacing: 3px; }
+  .top-bar span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+  .sidebar {
+    position: fixed; left: 0; top: 48px; bottom: 0; width: 260px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; z-index: 90; padding: 16px 0;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px;
+    color: var(--text-dim); padding: 12px 20px 6px; text-transform: uppercase;
+  }
+  .nav-item {
+    padding: 7px 20px; cursor: pointer; font-size: 12px; color: var(--text-mid);
+    display: flex; align-items: center; gap: 10px; transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { color: var(--green); background: var(--green-dim); border-left-color: var(--green); }
+  .nav-item .num { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 20px; }
+  .nav-item.active .num { color: var(--green); }
+  .nav-item .new-badge { font-size: 8px; background: var(--orange); color: var(--bg); padding: 1px 5px; border-radius: 3px; font-weight: 700; margin-left: auto; }
+
+  .main { margin-left: 260px; margin-top: 48px; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+
+  .screen-header { text-align: center; margin-bottom: 28px; max-width: 640px; }
+  .screen-header h2 { font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--green); margin-bottom: 6px; }
+  .screen-header p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .flow-tag {
+    display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    color: var(--purple); background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 4px; padding: 3px 10px; margin-bottom: 10px;
+  }
+  .flow-tag.new { color: var(--orange); background: rgba(255,140,0,0.1); border-color: rgba(255,140,0,0.3); }
+
+  .phone-container { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+  .phone-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .phone-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 1px; }
+  .phone {
+    width: 310px; height: 620px; background: var(--bg); border-radius: 30px;
+    border: 2px solid var(--border); overflow: hidden; position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+  }
+  .phone::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 90px; height: 22px; background: var(--bg); border-radius: 0 0 14px 14px;
+    border: 2px solid var(--border); border-top: none; z-index: 10;
+  }
+  .status-bar {
+    height: 34px; padding: 8px 18px; display: flex; justify-content: space-between; align-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim);
+  }
+  .phone-content { height: calc(100% - 34px); overflow-y: auto; }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  .p-section { padding: 14px 18px; }
+  .p-title { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+  .p-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+  .p-btn { display: flex; align-items: center; justify-content: center; padding: 11px 20px; border-radius: 10px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .p-btn-primary { background: var(--green); color: var(--bg); }
+  .p-btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .p-btn-red { background: var(--red); color: white; }
+
+  .p-bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 54px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-around; font-size: 10px; color: var(--text-dim);
+  }
+  .p-bottom-nav .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; }
+  .p-bottom-nav .tab.active { color: var(--green); }
+  .p-bottom-nav .tab .icon { font-size: 16px; }
+
+  /* Top bar inside phone */
+  .wallet-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 18px 8px;
+  }
+  .wallet-top-bar .challenge-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 8px;
+    background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.25);
+    font-size: 11px; color: var(--yellow); cursor: pointer; font-weight: 600;
+  }
+  .wallet-top-bar .notif-btn {
+    position: relative; font-size: 18px; cursor: pointer;
+  }
+  .wallet-top-bar .notif-btn .badge {
+    position: absolute; top: -4px; right: -6px;
+    background: var(--red); color: white; font-size: 8px; font-weight: 700;
+    width: 14px; height: 14px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Balance */
+  .balance-display { text-align: center; padding: 16px 18px 4px; }
+  .balance-amount { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; }
+  .balance-change { font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 2px; }
+  .balance-change.up { color: var(--green); }
+
+  .quick-actions { display: flex; gap: 10px; padding: 12px 18px; justify-content: center; }
+  .quick-action { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; color: var(--text-dim); }
+  .quick-action .circle { width: 40px; height: 40px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  .token-row { display: flex; align-items: center; padding: 10px 0; gap: 10px; }
+  .token-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .token-info { flex: 1; }
+  .token-name { font-size: 12px; font-weight: 600; }
+  .token-amount { font-size: 10px; color: var(--text-dim); }
+  .token-value { text-align: right; }
+  .token-price { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .token-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  .activity-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .activity-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .activity-info { flex: 1; }
+  .activity-label { font-size: 11px; }
+  .activity-sub { font-size: 9px; color: var(--text-dim); }
+  .activity-value { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+  /* Scanner */
+  .scan-input {
+    width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text-dim); font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  }
+  .risk-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700;
+  }
+  .risk-badge.high { background: var(--red-dim); color: var(--red); }
+  .risk-badge.medium { background: rgba(255,140,0,0.15); color: var(--orange); }
+  .risk-badge.safe { background: var(--green-dim); color: var(--green); }
+
+  .finding-row {
+    display: flex; align-items: center; gap: 8px; padding: 6px 0;
+    font-size: 11px;
+  }
+
+  /* Threat feed */
+  .threat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; margin-bottom: 10px; position: relative;
+  }
+  .threat-card.critical { border-left: 3px solid var(--red); }
+  .threat-card.warning { border-left: 3px solid var(--orange); }
+  .threat-card.info { border-left: 3px solid var(--cyan); }
+  .threat-severity {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  /* Challenge */
+  .scam-type-pill {
+    display: inline-block; padding: 6px 14px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 11px; color: var(--text-mid); margin: 3px 2px; cursor: pointer;
+  }
+  .scam-type-pill.selected { border-color: var(--yellow); color: var(--yellow); background: rgba(255,215,0,0.08); }
+
+  .difficulty-selector {
+    display: flex; gap: 8px; margin: 8px 0;
+  }
+  .diff-btn {
+    flex: 1; padding: 8px; text-align: center; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 10px; color: var(--text-dim); cursor: pointer;
+  }
+  .diff-btn.selected { border-color: var(--yellow); color: var(--yellow); }
+
+  .challenge-result-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* Onboarding */
+  .onboard-screen {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 36px 22px; text-align: center; position: relative;
+  }
+  .onboard-screen .big-icon { font-size: 56px; margin-bottom: 20px; }
+  .onboard-screen h3 { font-family: 'JetBrains Mono', monospace; font-size: 17px; margin-bottom: 10px; line-height: 1.4; }
+  .onboard-screen p { font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-bottom: 28px; }
+  .onboard-dots { display: flex; gap: 5px; position: absolute; bottom: 90px; }
+  .onboard-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .onboard-dots .dot.active { width: 18px; border-radius: 3px; background: var(--green); }
+  .onboard-screen .p-btn { position: absolute; bottom: 36px; left: 22px; right: 22px; }
+
+  /* Results */
+  .result-screen {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 28px 22px; text-align: center;
+  }
+  .result-screen .big-text { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; margin-bottom: 6px; }
+  .result-screen .amount { font-family: 'JetBrains Mono', monospace; font-size: 22px; margin-bottom: 14px; }
+
+  /* Education */
+  .edu-step { display: flex; gap: 10px; margin-bottom: 12px; }
+  .edu-num {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--green-dim); color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; flex-shrink: 0;
+  }
+  .edu-text { font-size: 11px; color: var(--text-mid); line-height: 1.5; }
+  .edu-text strong { color: var(--text); }
+
+  /* Chat */
+  .chat-bubble { max-width: 82%; padding: 10px 14px; border-radius: 14px; font-size: 11px; line-height: 1.5; margin-bottom: 6px; }
+  .chat-bubble.npc { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .chat-bubble.system { background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; font-size: 10px; color: var(--purple); text-align: center; max-width: 100%; }
+  .choice-btn { display: block; width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 11px; color: var(--text); text-align: left; margin-bottom: 5px; cursor: pointer; }
+  .choice-btn:hover { border-color: var(--green); background: var(--green-dim); }
+
+  /* Gear */
+  .gear-slot {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px;
+  }
+  .gear-icon-box { width: 40px; height: 40px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+  /* Map */
+  .map-chapter {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px;
+  }
+  .map-chapter.locked { opacity: 0.35; }
+  .map-chapter.current { border-color: var(--green); }
+  .map-chapter .ch-num { width: 36px; height: 36px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .ch-info h4 { font-size: 12px; }
+  .ch-info p { font-size: 9px; color: var(--text-dim); }
+  .map-line { width: 2px; height: 12px; background: var(--border); margin: 0 0 0 28px; }
+
+  /* Leaderboard */
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .lb-rank { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; min-width: 22px; text-align: center; }
+  .lb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .lb-info { flex: 1; }
+  .lb-name { font-size: 12px; font-weight: 500; }
+  .lb-stat { font-size: 9px; color: var(--text-dim); }
+  .lb-score { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--green); }
+
+  /* Stat bars */
+  .stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .stat-label { font-size: 11px; width: 75px; display: flex; align-items: center; gap: 4px; }
+  .stat-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 3px; }
+  .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 24px; text-align: right; }
+
+  /* Approval */
+  .approval-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; z-index: 10; }
+  .approval-sheet { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 18px 18px 0 0; padding: 18px; }
+  .approval-sheet .handle { width: 30px; height: 3px; background: var(--border); border-radius: 2px; margin: 0 auto 14px; }
+
+  .section-divider { width: 100%; max-width: 1200px; border-top: 1px solid var(--border); margin: 40px 0; padding-top: 40px; }
+  .flow-arrow { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--text-dim); padding: 0 6px; }
+
+  .share-card {
+    margin: 16px; background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%);
+    border: 1px solid var(--border); border-radius: 18px; padding: 22px; text-align: center;
+  }
+  .share-card .watermark { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); letter-spacing: 2px; margin-top: 14px; }
+
+  .reward-overlay {
+    height: 100%; background: radial-gradient(circle at 50% 30%, rgba(0,255,136,0.08) 0%, var(--bg) 60%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; text-align: center;
+  }
+  .reward-chest { font-size: 64px; margin-bottom: 20px; animation: float 2s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+  .npc-portrait {
+    width: 70px; height: 70px; border-radius: 18px; background: var(--surface); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 6px;
+  }
+  .npc-name-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--green); text-align: center; margin-bottom: 14px; }
+  .dialog-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; font-size: 12px; line-height: 1.6; margin-bottom: 10px;
+  }
+
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .setting-row .left { display: flex; align-items: center; gap: 10px; }
+  .setting-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .toggle { width: 36px; height: 20px; border-radius: 10px; background: var(--green); position: relative; }
+  .toggle::after { content: ''; position: absolute; right: 3px; top: 3px; width: 14px; height: 14px; background: white; border-radius: 50%; }
+  .toggle.off { background: var(--border); }
+  .toggle.off::after { right: auto; left: 3px; }
+
+  @media (max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>REKT // WIREFRAMES v2</h1>
+  <span>22 SCREENS · FINAL BUILD</span>
+</div>
+
+<nav class="sidebar">
+  <div class="nav-group">
+    <div class="nav-group-title">Onboarding</div>
+    <div class="nav-item active" onclick="go('onboarding')"><span class="num">01</span>Splash Screens</div>
+    <div class="nav-item" onclick="go('character')"><span class="num">02</span>Character Select</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Core Hub</div>
+    <div class="nav-item" onclick="go('wallet')"><span class="num">03</span>Wallet Home (Updated)</div>
+    <div class="nav-item" onclick="go('portfolio')"><span class="num">04</span>Portfolio Detail</div>
+    <div class="nav-item" onclick="go('notifications')"><span class="num">05</span>Notifications</div>
+    <div class="nav-item" onclick="go('activity')"><span class="num">06</span>Activity Feed</div>
+    <div class="nav-item" onclick="go('scanner')"><span class="num">07</span>Scam Scanner<span class="new-badge">NEW</span></div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Gameplay</div>
+    <div class="nav-item" onclick="go('scenario')"><span class="num">08</span>Scam Scenario</div>
+    <div class="nav-item" onclick="go('approval')"><span class="num">09</span>Approval Popup</div>
+    <div class="nav-item" onclick="go('rekt')"><span class="num">10</span>REKT Screen</div>
+    <div class="nav-item" onclick="go('survived')"><span class="num">11</span>Survived Screen</div>
+    <div class="nav-item" onclick="go('education')"><span class="num">12</span>Education Post-Mortem</div>
+    <div class="nav-item" onclick="go('npc')"><span class="num">13</span>NPC Dialogue</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Progression</div>
+    <div class="nav-item" onclick="go('profile')"><span class="num">14</span>Character Profile</div>
+    <div class="nav-item" onclick="go('gear')"><span class="num">15</span>Gear / Inventory</div>
+    <div class="nav-item" onclick="go('map')"><span class="num">16</span>World Map</div>
+    <div class="nav-item" onclick="go('leaderboard')"><span class="num">17</span>Leaderboard</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Post-Game (Phase 2)</div>
+    <div class="nav-item" onclick="go('threats')"><span class="num">18</span>Live Threat Feed<span class="new-badge">NEW</span></div>
+    <div class="nav-item" onclick="go('challenge')"><span class="num">19</span>Challenge Creator<span class="new-badge">NEW</span></div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Utility</div>
+    <div class="nav-item" onclick="go('daily')"><span class="num">20</span>Daily Reward</div>
+    <div class="nav-item" onclick="go('share')"><span class="num">21</span>Share Card</div>
+    <div class="nav-item" onclick="go('settings')"><span class="num">22</span>Settings</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Reference</div>
+    <div class="nav-item" onclick="go('flowmap')"><span class="num">→</span>Flow Map</div>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ===== 01 ONBOARDING ===== -->
+<div id="onboarding">
+  <div class="screen-header">
+    <div class="flow-tag">ONBOARDING</div>
+    <h2>01 — Splash Screens</h2>
+    <p>3 swipes. Hook → Promise → Action. Get users into the game in under 15 seconds.</p>
+  </div>
+  <div class="phone-container">
+    <div class="phone-wrapper"><div class="phone-label">HOOK</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content"><div class="onboard-screen"><div class="big-icon">💀</div><h3>Your crypto<br><span style="color:var(--red)">WILL</span> get hacked.</h3><p>92% of crypto users encounter a scam. Most lose everything.</p><div class="onboard-dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div><div class="p-btn p-btn-outline">Swipe →</div></div></div></div></div>
+    <div class="flow-arrow">→</div>
+    <div class="phone-wrapper"><div class="phone-label">PROMISE</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content"><div class="onboard-screen"><div class="big-icon">🛡️</div><h3>Learn by<br><span style="color:var(--green)">experiencing</span> it.</h3><p>A safe simulation. No real assets. Real scam patterns from the wild.</p><div class="onboard-dots"><div class="dot"></div><div class="dot active"></div><div class="dot"></div></div><div class="p-btn p-btn-outline">Swipe →</div></div></div></div></div>
+    <div class="flow-arrow">→</div>
+    <div class="phone-wrapper"><div class="phone-label">ACTION</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content"><div class="onboard-screen"><div class="big-icon">💰</div><h3>Here's <span style="color:var(--yellow)">$10,000</span>.<br>Try to keep it.</h3><p>Build your portfolio. Survive the scams. Don't get REKT.</p><div class="onboard-dots"><div class="dot"></div><div class="dot"></div><div class="dot active"></div></div><div class="p-btn p-btn-primary">Start Playing →</div></div></div></div></div>
+  </div>
+</div>
+
+<!-- ===== 02 CHARACTER ===== -->
+<div class="section-divider" id="character">
+  <div class="screen-header"><div class="flow-tag">ONBOARDING</div><h2>02 — Character Select</h2><p>Pick a class. Changes gameplay experience, scam types, and growth speed.</p></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">CLASS SELECTION</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content"><div style="padding:10px 16px"><p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);margin-bottom:2px">CHOOSE YOUR CLASS</p><p style="font-size:11px;color:var(--text-dim);margin-bottom:14px">This changes your gameplay</p></div><div style="padding:0 14px">
+    <div style="background:var(--surface);border:1px solid var(--green);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:10px;background:var(--green-dim);display:flex;align-items:center;justify-content:center;font-size:24px">🐵</div><div><div style="font-size:13px;font-weight:600">The Ape</div><div style="font-size:10px;color:var(--text-dim)">Fast gains, FOMO-driven</div><div style="display:flex;gap:6px;margin-top:4px"><span style="font-size:8px;padding:2px 6px;background:var(--green-dim);color:var(--green);border-radius:3px">+GROWTH</span><span style="font-size:8px;padding:2px 6px;background:var(--red-dim);color:var(--red);border-radius:3px">-DETECTION</span></div></div></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px">🧠</div><div><div style="font-size:13px;font-weight:600">The Analyst</div><div style="font-size:10px;color:var(--text-dim)">Research-first, 2 free inspections/day</div></div></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px">🥷</div><div><div style="font-size:13px;font-weight:600">The Shadow</div><div style="font-size:10px;color:var(--text-dim)">Privacy-focused, balanced stats</div></div></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px">🎲</div><div><div style="font-size:13px;font-weight:600">The Degen</div><div style="font-size:10px;color:var(--text-dim)">High risk/reward, chaotic</div></div></div>
+  </div><div style="padding:14px"><div class="p-btn p-btn-primary">Confirm: The Ape →</div></div></div></div></div></div>
+</div>
+
+<!-- ===== 03 WALLET HOME ===== -->
+<div class="section-divider" id="wallet">
+  <div class="screen-header"><div class="flow-tag new">UPDATED — TOP BAR</div><h2>03 — Wallet Home</h2><p>Main hub. Updated with 🏆 Challenge button (top-left) and 🔔 notification bell (top-right). Bottom nav now includes Scanner tab.</p></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">WALLET HOME</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content" style="padding-bottom:56px">
+    <!-- NEW TOP BAR -->
+    <div class="wallet-top-bar">
+      <div class="challenge-btn">🏆 Challenge</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:10px;color:var(--text-dim)">🔥13</span>
+        <div class="notif-btn">🔔<div class="badge">3</div></div>
+      </div>
+    </div>
+    <!-- HP -->
+    <div style="padding:0 18px 4px;display:flex;align-items:center;gap:6px">
+      <span style="font-size:9px">❤️</span>
+      <div style="flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden"><div style="width:80%;height:100%;background:var(--green);border-radius:2px"></div></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-dim)">80HP</span>
+    </div>
+    <div class="balance-display">
+      <div style="font-size:10px;color:var(--text-dim)">Total Portfolio</div>
+      <div class="balance-amount">$47,832<span style="font-size:16px;color:var(--text-dim)">.15</span></div>
+      <div class="balance-change up">▲ +$1,204.30 (2.58%)</div>
+    </div>
+    <div class="quick-actions">
+      <div class="quick-action"><div class="circle">📥</div><span>Claim</span></div>
+      <div class="quick-action"><div class="circle">🔄</div><span>Swap</span></div>
+      <div class="quick-action"><div class="circle">🏦</div><span>Stake</span></div>
+      <div class="quick-action"><div class="circle">🔍</div><span>Inspect</span></div>
+    </div>
+    <div class="p-section"><div class="p-title">Holdings</div>
+      <div class="p-card" style="padding:2px 12px">
+        <div class="token-row"><div class="token-icon" style="background:#627eea33;color:#627eea">Ξ</div><div class="token-info"><div class="token-name">Ethereum</div><div class="token-amount">3.2 ETH</div></div><div class="token-value"><div class="token-price">$9,200</div><div class="token-pct" style="color:var(--green)">+3.1%</div></div></div>
+        <div class="token-row" style="border-top:1px solid rgba(255,255,255,0.03)"><div class="token-icon" style="background:#2775ca33;color:#2775ca">$</div><div class="token-info"><div class="token-name">USDC</div><div class="token-amount">1,647 USDC</div></div><div class="token-value"><div class="token-price">$1,647</div><div class="token-pct" style="color:var(--text-dim)">0.0%</div></div></div>
+        <div class="token-row" style="border-top:1px solid rgba(255,255,255,0.03)"><div class="token-icon" style="background:rgba(255,215,0,0.15);color:var(--yellow)">🌙</div><div class="token-info"><div class="token-name" style="color:var(--yellow)">$MOONRISE</div><div class="token-amount">50,000 MOON</div></div><div class="token-value"><div class="token-price">$985</div><div class="token-pct" style="color:var(--green)">+47%</div></div></div>
+      </div>
+    </div>
+    <div class="p-section" style="padding-top:0"><div class="p-title">Recent</div>
+      <div class="activity-item"><div class="activity-icon" style="background:var(--green-dim)">✓</div><div class="activity-info"><div class="activity-label">Staking reward</div><div class="activity-sub">2h ago</div></div><div class="activity-value" style="color:var(--green)">+$23</div></div>
+      <div class="activity-item"><div class="activity-icon" style="background:rgba(255,215,0,0.15)">🎁</div><div class="activity-info"><div class="activity-label" style="color:var(--yellow)">Airdrop: Claim 500 UNI →</div><div class="activity-sub" style="color:var(--yellow)">Tap to claim</div></div><div class="activity-value">🔔</div></div>
+    </div>
+  </div>
+  <div class="p-bottom-nav">
+    <div class="tab active"><span class="icon">🏠</span>Wallet</div>
+    <div class="tab"><span class="icon">🗺️</span>Map</div>
+    <div class="tab"><span class="icon">🔍</span>Scanner</div>
+    <div class="tab"><span class="icon">📊</span>Stats</div>
+    <div class="tab"><span class="icon">⚙️</span>More</div>
+  </div></div></div></div>
+</div>
+
+<!-- ===== 07 SCANNER ===== -->
+<div class="section-divider" id="scanner">
+  <div class="screen-header"><div class="flow-tag new">NEW — POST-GAME TOOL</div><h2>07 — Scam Scanner</h2><p>Real utility that keeps users forever. Paste any link/contract/token → get instant risk assessment. Connects findings to game chapters.</p></div>
+  <div class="phone-container">
+    <div class="phone-wrapper"><div class="phone-label">SCANNER — INPUT</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content" style="padding-bottom:56px">
+      <div style="padding:14px 18px 8px"><h3 style="font-size:16px">🔍 Scam Scanner</h3><p style="font-size:10px;color:var(--text-dim);margin-top:2px">Paste any link, contract, or token address</p></div>
+      <div style="padding:0 16px">
+        <div class="scan-input">0x9f3a...1c2d</div>
+        <div class="p-btn p-btn-primary" style="margin-top:10px">Scan Now 🔍</div>
+      </div>
+      <div class="p-section"><div class="p-title">Recent Scans</div>
+        <div class="p-card" style="display:flex;align-items:center;gap:10px"><span class="risk-badge safe">SAFE</span><div style="flex:1"><div style="font-size:11px">app.uniswap.org</div><div style="font-size:9px;color:var(--text-dim)">Verified DEX · Scanned today</div></div></div>
+        <div class="p-card" style="display:flex;align-items:center;gap:10px"><span class="risk-badge high">HIGH</span><div style="flex:1"><div style="font-size:11px">0x9f3...a1c</div><div style="font-size:9px;color:var(--text-dim)">Honeypot detected · 2h ago</div></div></div>
+        <div class="p-card" style="display:flex;align-items:center;gap:10px"><span class="risk-badge medium">MED</span><div style="flex:1"><div style="font-size:11px">moontoken.io</div><div style="font-size:9px;color:var(--text-dim)">Unverified team · Yesterday</div></div></div>
+      </div>
+    </div>
+    <div class="p-bottom-nav"><div class="tab"><span class="icon">🏠</span>Wallet</div><div class="tab"><span class="icon">🗺️</span>Map</div><div class="tab active"><span class="icon">🔍</span>Scanner</div><div class="tab"><span class="icon">📊</span>Stats</div><div class="tab"><span class="icon">⚙️</span>More</div></div>
+    </div></div>
+
+    <div class="flow-arrow">→</div>
+
+    <div class="phone-wrapper"><div class="phone-label">SCANNER — RISK REPORT</div><div class="phone"><div class="status-bar"><span>← Back</span><span></span></div><div class="phone-content">
+      <div style="padding:16px 18px;text-align:center">
+        <div style="font-size:36px;margin-bottom:6px">🔴</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--red);font-weight:700">HIGH RISK</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);margin-top:2px">Risk Score: 82 / 100</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:4px;padding:4px 10px;background:var(--surface);border-radius:6px;display:inline-block">0x9f3a...1c2d</div>
+      </div>
+      <div class="p-section" style="padding-top:0"><div class="p-title">Findings</div>
+        <div class="finding-row">🚩 <span style="color:var(--red)">Contract not verified on Etherscan</span></div>
+        <div class="finding-row">🚩 <span style="color:var(--red)">Top wallet holds 73% of supply</span></div>
+        <div class="finding-row">🚩 <span style="color:var(--red)">Sell function appears disabled (honeypot)</span></div>
+        <div class="finding-row">⚠️ <span style="color:var(--orange)">Liquidity only $12k (low)</span></div>
+        <div class="finding-row">✅ <span style="color:var(--green)">No proxy contract detected</span></div>
+      </div>
+      <div class="p-section" style="padding-top:0">
+        <div class="p-card" style="background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.2)">
+          <div style="font-size:10px;color:var(--purple);font-family:'JetBrains Mono',monospace;margin-bottom:4px">GAME CONNECTION</div>
+          <div style="font-size:11px;color:var(--text-mid);line-height:1.5">This matches the <strong style="color:var(--text)">Honeypot Token</strong> pattern from <strong style="color:var(--green)">Chapter 2, Scenario 3</strong>. You survived that one! 🛡️</div>
+          <div style="margin-top:8px"><span style="font-size:10px;padding:4px 10px;background:rgba(139,92,246,0.15);border-radius:6px;color:var(--purple);cursor:pointer">Re-play Scenario →</span></div>
+        </div>
+      </div>
+      <div style="padding:0 16px 20px;display:flex;gap:8px">
+        <div class="p-btn p-btn-outline" style="flex:1;font-size:11px">📸 Share Report</div>
+        <div class="p-btn p-btn-primary" style="flex:1;font-size:11px">Scan Another</div>
+      </div>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ===== 08 SCENARIO ===== -->
+<div class="section-divider" id="scenario">
+  <div class="screen-header"><div class="flow-tag">GAMEPLAY</div><h2>08 — Scam Scenario</h2><p>NPC dialogue + choices. Each path leads to different outcomes.</p></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">DM SCAM SCENARIO</div><div class="phone"><div class="status-bar"><span>← Notifications</span><span></span></div><div class="phone-content">
+    <div style="text-align:center;padding:16px;background:linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%)"><div style="font-size:28px;margin-bottom:6px">💬</div><div style="font-size:13px;font-weight:600">Direct Message</div><div style="font-size:10px;color:var(--text-dim)">from "MetaMask Support"</div></div>
+    <div style="padding:14px;display:flex;flex-direction:column;gap:4px">
+      <div class="chat-bubble system">💬 New conversation</div>
+      <div style="display:flex;gap:8px;align-items:flex-end"><div style="width:26px;height:26px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🦊</div><div class="chat-bubble npc">Hi! MetaMask Support here. We detected unauthorized access on your wallet 0x7f2...8a4.<br><br>Verify your identity immediately to secure funds.</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:2px"><div style="width:26px;flex-shrink:0"></div><div class="chat-bubble npc">⚠️ You have 10 minutes before wallet freeze.</div></div>
+      <div style="margin-top:14px">
+        <div style="font-size:9px;color:var(--text-dim);margin-bottom:6px;font-family:'JetBrains Mono',monospace">YOUR RESPONSE:</div>
+        <div class="choice-btn">🔑 Share seed phrase to verify</div>
+        <div class="choice-btn">🔍 Inspect their profile first</div>
+        <div class="choice-btn">🚫 Ignore & block</div>
+        <div class="choice-btn">🧠 Ask Sensei (2 left)</div>
+      </div>
+    </div>
+  </div></div></div></div>
+</div>
+
+<!-- ===== 09 APPROVAL ===== -->
+<div class="section-divider" id="approval">
+  <div class="screen-header"><div class="flow-tag">GAMEPLAY</div><h2>09 — Approval Popup</h2><p>Side-by-side: safe vs scam. The difference is in the details players must learn to read.</p></div>
+  <div class="phone-container">
+    <div class="phone-wrapper"><div class="phone-label">✅ SAFE APPROVAL</div><div class="phone"><div class="status-bar"><span>9:41</span><span></span></div><div class="phone-content" style="position:relative"><div style="opacity:0.15;padding:20px"><div style="font-size:22px;text-align:center;margin:20px 0">$47,832</div></div><div class="approval-overlay"><div class="approval-sheet"><div class="handle"></div><div style="text-align:center;margin-bottom:14px"><div style="font-size:10px;color:var(--text-dim)">APPROVE TRANSACTION</div><div style="font-size:14px;font-weight:600">Swap on Uniswap</div></div><div class="p-card" style="font-size:11px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text-dim)">Amount</span><span style="color:var(--green)">100 USDC</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text-dim)">Contract</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px">0x7a25...3f8b ✓</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--text-dim)">Gas</span><span>$2.40</span></div></div><div style="display:flex;gap:8px;margin-top:12px"><div class="p-btn p-btn-outline" style="flex:1;font-size:11px">Reject</div><div class="p-btn p-btn-primary" style="flex:1;font-size:11px">Approve ✓</div></div></div></div></div></div></div>
+    <div class="flow-arrow">vs</div>
+    <div class="phone-wrapper"><div class="phone-label">⚠️ SCAM APPROVAL</div><div class="phone" style="border-color:rgba(255,51,102,0.3)"><div class="status-bar"><span>9:41</span><span></span></div><div class="phone-content" style="position:relative"><div style="opacity:0.15;padding:20px"><div style="font-size:22px;text-align:center;margin:20px 0">$47,832</div></div><div class="approval-overlay"><div class="approval-sheet"><div class="handle"></div><div style="text-align:center;margin-bottom:14px"><div style="font-size:10px;color:var(--text-dim)">APPROVE TRANSACTION</div><div style="font-size:14px;font-weight:600">Claim Airdrop</div></div><div class="p-card" style="font-size:11px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text-dim)">Amount</span><span style="color:var(--red);font-weight:700">♾️ UNLIMITED</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text-dim)">Contract</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px">0x9f3a...1c2d ✗</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--text-dim)">Gas</span><span>$0.80</span></div></div><div style="display:flex;gap:8px;margin-top:12px"><div class="p-btn p-btn-outline" style="flex:1;font-size:11px">Reject</div><div class="p-btn p-btn-red" style="flex:1;font-size:11px">Approve ✓</div></div></div></div></div></div></div>
+  </div>
+</div>
+
+<!-- ===== 10 REKT ===== -->
+<div class="section-divider" id="rekt">
+  <div class="screen-header"><div class="flow-tag">OUTCOME</div><h2>10 — REKT Screen</h2></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">💀 GOT REKT</div><div class="phone" style="border-color:var(--red)"><div class="status-bar"><span></span><span></span></div><div class="phone-content"><div class="result-screen" style="background:radial-gradient(circle at 50% 40%, rgba(255,51,102,0.1) 0%, var(--bg) 60%)"><div style="font-size:48px;margin-bottom:12px">💀</div><div class="big-text" style="color:var(--red)">REKT</div><div class="amount" style="color:var(--red)">-$34,201</div><div class="p-card" style="width:100%;text-align:left"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px"><span style="color:var(--text-dim)">Attack</span><span>Unlimited Approval</span></div><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px"><span style="color:var(--text-dim)">Survived</span><span>12 days 🔥</span></div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text-dim)">Others rekt</span><span>73%</span></div></div><div style="display:flex;gap:8px;width:100%;margin-top:14px"><div class="p-btn p-btn-outline" style="flex:1;font-size:11px">📸 Share</div><div class="p-btn p-btn-primary" style="flex:1;font-size:11px">Learn Why →</div></div></div></div></div></div></div>
+</div>
+
+<!-- ===== 11 SURVIVED ===== -->
+<div class="section-divider" id="survived">
+  <div class="screen-header"><div class="flow-tag">OUTCOME</div><h2>11 — Survived Screen</h2></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">🛡️ SURVIVED</div><div class="phone" style="border-color:var(--green)"><div class="status-bar"><span></span><span></span></div><div class="phone-content"><div class="result-screen" style="background:radial-gradient(circle at 50% 40%, rgba(0,255,136,0.08) 0%, var(--bg) 60%)"><div style="font-size:48px;margin-bottom:12px">🛡️</div><div class="big-text" style="color:var(--green)">SURVIVED</div><div class="amount" style="color:var(--green)">$47,832 saved</div><div class="p-card" style="width:100%;text-align:left"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px"><span style="color:var(--text-dim)">Blocked</span><span>Fake DM Phishing</span></div><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px"><span style="color:var(--text-dim)">Streak</span><span>13 days 🔥🔥</span></div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--text-dim)">Safer than</span><span style="color:var(--green)">Top 27%</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:10px">+350 XP · +2 🛡️ Security Tokens</div><div style="display:flex;gap:8px;width:100%;margin-top:12px"><div class="p-btn p-btn-outline" style="flex:1;font-size:11px">📸 Share</div><div class="p-btn p-btn-primary" style="flex:1;font-size:11px">Continue →</div></div></div></div></div></div></div>
+</div>
+
+<!-- ===== 12 EDUCATION ===== -->
+<div class="section-divider" id="education">
+  <div class="screen-header"><div class="flow-tag">GAMEPLAY — LEARNING</div><h2>12 — Education Post-Mortem</h2><p>Breakdown of how the attack worked + real-world protection tips.</p></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">POST-MORTEM</div><div class="phone"><div class="status-bar"><span>← Back</span><span></span></div><div class="phone-content" style="padding-bottom:16px">
+    <div style="padding:14px 18px 6px"><div style="font-size:9px;color:var(--red);font-family:'JetBrains Mono',monospace;margin-bottom:3px">ATTACK ANALYSIS</div><h3 style="font-size:14px;margin-bottom:3px">Unlimited Token Approval</h3><div style="font-size:10px;color:var(--text-dim)">★★★☆☆ · Smart Contract</div></div>
+    <div class="p-section"><div class="p-title">How it worked</div>
+      <div class="edu-step"><div class="edu-num">1</div><div class="edu-text"><strong>Fake airdrop</strong> appeared in your activity feed.</div></div>
+      <div class="edu-step"><div class="edu-num">2</div><div class="edu-text">Approval amount was set to <strong style="color:var(--red)">UNLIMITED</strong>.</div></div>
+      <div class="edu-step"><div class="edu-num">3</div><div class="edu-text">Contract could <strong>drain all USDC</strong> at any time.</div></div>
+      <div class="edu-step"><div class="edu-num">4</div><div class="edu-text">Attacker waited, then <strong>transferred everything</strong>.</div></div>
+    </div>
+    <div class="p-section" style="padding-top:0"><div class="p-title">Red flags</div><div class="p-card"><div style="font-size:11px;line-height:1.7">🚩 "Unlimited" approval amount<br>🚩 Unknown contract address<br>🚩 Unsolicited airdrop<br>🚩 Too-good-to-be-true reward</div></div></div>
+    <div class="p-section" style="padding-top:0"><div class="p-title">IRL Protection</div><div class="p-card" style="background:var(--green-dim);border-color:rgba(0,255,136,0.2)"><div style="font-size:11px;color:var(--green);line-height:1.7">✅ Check approval amounts before signing<br>✅ Use revoke.cash for old approvals<br>✅ Never claim unsolicited airdrops<br>✅ Verify contract on Etherscan</div></div></div>
+    <div style="padding:0 16px"><div class="p-btn p-btn-primary">Got it! Continue →</div></div>
+  </div></div></div></div>
+</div>
+
+<!-- ===== 13 NPC ===== -->
+<div class="section-divider" id="npc">
+  <div class="screen-header"><div class="flow-tag">GAMEPLAY — STORY</div><h2>13 — NPC Dialogue</h2></div>
+  <div class="phone-container">
+    <div class="phone-wrapper"><div class="phone-label">SATOSHI SENSEI</div><div class="phone"><div class="status-bar"><span>← Back</span><span></span></div><div class="phone-content"><div style="padding:20px 18px"><div class="npc-portrait">🧙</div><div class="npc-name-tag">SATOSHI SENSEI</div><div class="dialog-box">"You survived the approval attack. Good. But survival is not mastery. Why did you hesitate?"</div><div style="margin-top:14px"><div class="choice-btn">🗣️ "The free tokens were tempting..."</div><div class="choice-btn">🗣️ "I wasn't sure if it was real"</div><div class="choice-btn">🗣️ "I checked the amount first"</div></div></div></div></div></div>
+    <div class="phone-wrapper"><div class="phone-label">SCAMMY SAM (DISGUISED)</div><div class="phone"><div class="status-bar"><span>← Messages</span><span></span></div><div class="phone-content"><div style="padding:20px 18px"><div class="npc-portrait" style="border-color:rgba(255,215,0,0.3)">👨‍💻</div><div class="npc-name-tag" style="color:var(--text)">"DEV DAN" — $MOONRISE</div><div class="dialog-box">"Hey! Special staking pool for early holders — 200% APY for 48 hours. Want the link?"</div><div style="margin-top:14px"><div class="choice-btn">🤑 "Yes! Send me the link!"</div><div class="choice-btn">🔍 "Can I see the contract?"</div><div class="choice-btn">🤨 "How do I know you're legit?"</div><div class="choice-btn">🚫 "Sounds too good"</div></div><div style="margin-top:10px;padding:6px 10px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.15);border-radius:6px"><div style="font-size:9px;color:var(--yellow)">⚠️ Something feels off...</div></div></div></div></div></div>
+  </div>
+</div>
+
+<!-- ===== 14-17 PROGRESSION ===== -->
+<div class="section-divider" id="profile">
+  <div class="screen-header"><div class="flow-tag">PROGRESSION</div><h2>14-17 — Profile, Gear, Map, Leaderboard</h2><p>Character stats, equipped security gear, chapter progression, and global rankings.</p></div>
+  <div class="phone-container">
+    <!-- Profile -->
+    <div class="phone-wrapper"><div class="phone-label">14 — CHARACTER PROFILE</div><div class="phone"><div class="status-bar"><span>9:41</span><span></span></div><div class="phone-content" style="padding-bottom:56px">
+      <div style="text-align:center;padding:16px"><div style="width:64px;height:64px;border-radius:18px;background:var(--surface);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 6px">🐵</div><div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600">ApeKing_VN</div><div style="font-size:10px;color:var(--green)">Level 12 · The Ape · 🔥13</div></div>
+      <div style="padding:0 16px"><div style="margin-bottom:4px;display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim)"><span>Lvl 12</span><span>2,340/3,000 XP</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:14px"><div style="width:78%;height:100%;background:var(--green);border-radius:3px"></div></div></div>
+      <div class="p-section" style="padding-top:0"><div class="p-title">Stats</div>
+        <div class="stat-row"><div class="stat-label">🛡️ Security</div><div class="stat-track"><div class="stat-fill" style="width:65%;background:var(--green)"></div></div><div class="stat-val">65</div></div>
+        <div class="stat-row"><div class="stat-label">👁️ Detection</div><div class="stat-track"><div class="stat-fill" style="width:48%;background:var(--cyan)"></div></div><div class="stat-val">48</div></div>
+        <div class="stat-row"><div class="stat-label">💎 Wealth</div><div class="stat-track"><div class="stat-fill" style="width:72%;background:var(--yellow)"></div></div><div class="stat-val">72</div></div>
+        <div class="stat-row"><div class="stat-label">🧠 Knowledge</div><div class="stat-track"><div class="stat-fill" style="width:55%;background:var(--purple)"></div></div><div class="stat-val">55</div></div>
+      </div>
+      <div class="p-section" style="padding-top:0"><div class="p-title">Record</div><div class="p-card"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--green)">18</div><div style="font-size:9px;color:var(--text-dim)">Survived</div></div><div style="width:1px;background:var(--border)"></div><div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--red)">3</div><div style="font-size:9px;color:var(--text-dim)">Rekt</div></div><div style="width:1px;background:var(--border)"></div><div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--yellow)">86%</div><div style="font-size:9px;color:var(--text-dim)">Rate</div></div></div></div></div>
+    </div><div class="p-bottom-nav"><div class="tab"><span class="icon">🏠</span>Wallet</div><div class="tab"><span class="icon">🗺️</span>Map</div><div class="tab"><span class="icon">🔍</span>Scanner</div><div class="tab active"><span class="icon">📊</span>Stats</div><div class="tab"><span class="icon">⚙️</span>More</div></div></div></div>
+
+    <!-- Map -->
+    <div class="phone-wrapper"><div class="phone-label">16 — WORLD MAP</div><div class="phone"><div class="status-bar"><span>9:41</span><span></span></div><div class="phone-content" style="padding-bottom:56px">
+      <div style="padding:14px 18px 6px"><h3 style="font-size:14px">The Chain</h3><div style="font-size:10px;color:var(--text-dim)">Chapter 2 of 5</div></div>
+      <div style="padding:0 14px">
+        <div class="map-chapter"><div class="ch-num" style="background:var(--green-dim)">🏠</div><div class="ch-info"><h4>Ch.1: Genesis Block</h4><p>✅ Complete · 5/5</p></div></div>
+        <div class="map-line"></div>
+        <div class="map-chapter current"><div class="ch-num" style="background:var(--green-dim)">🏦</div><div class="ch-info"><h4 style="color:var(--green)">Ch.2: DEX District</h4><p>In progress · 3/5</p></div></div>
+        <div class="map-line"></div>
+        <div class="map-chapter locked"><div class="ch-num">🎨</div><div class="ch-info"><h4>Ch.3: NFT Bazaar</h4><p>🔒 Level 15</p></div></div>
+        <div class="map-line" style="opacity:0.3"></div>
+        <div class="map-chapter locked"><div class="ch-num">🌉</div><div class="ch-info"><h4>Ch.4: Bridge City</h4><p>🔒 Level 20</p></div></div>
+        <div class="map-line" style="opacity:0.3"></div>
+        <div class="map-chapter locked"><div class="ch-num">💀</div><div class="ch-info"><h4>Ch.5: The Dark Pool</h4><p>🔒 Level 25</p></div></div>
+      </div>
+    </div><div class="p-bottom-nav"><div class="tab"><span class="icon">🏠</span>Wallet</div><div class="tab active"><span class="icon">🗺️</span>Map</div><div class="tab"><span class="icon">🔍</span>Scanner</div><div class="tab"><span class="icon">📊</span>Stats</div><div class="tab"><span class="icon">⚙️</span>More</div></div></div></div>
+  </div>
+</div>
+
+<!-- ===== 18 THREAT FEED ===== -->
+<div class="section-divider" id="threats">
+  <div class="screen-header"><div class="flow-tag new">NEW — POST-GAME</div><h2>18 — Live Threat Feed</h2><p>Real crypto scam/hack news connected to game chapters. Keeps the app relevant forever. Users come back daily to stay informed.</p></div>
+  <div class="phone-container"><div class="phone-wrapper"><div class="phone-label">LIVE THREATS</div><div class="phone"><div class="status-bar"><span>9:41</span><span>⚡82%</span></div><div class="phone-content" style="padding-bottom:56px">
+    <div style="padding:14px 18px 6px"><h3 style="font-size:16px">🔔 Live Threats</h3><div style="font-size:10px;color:var(--text-dim)">Updated 2 hours ago · 3 new alerts</div></div>
+    <div style="padding:0 14px">
+      <div class="threat-card critical">
+        <div class="threat-severity" style="color:var(--red)">🔴 CRITICAL · 3H AGO</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">$2.3M drained via approval exploit</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:8px">DeFi protocol LendSwap exploited through unlimited token approval vulnerability. Users who approved the contract lost all deposited funds.</div>
+        <div style="padding:6px 10px;background:rgba(139,92,246,0.08);border-radius:6px;margin-bottom:8px"><div style="font-size:10px;color:var(--purple)">🎮 You trained for this → <strong>Chapter 2, Scenario 4</strong></div></div>
+        <div style="display:flex;gap:6px"><span style="font-size:10px;padding:4px 10px;background:var(--surface2);border-radius:6px;color:var(--text-mid);cursor:pointer">Read More →</span><span style="font-size:10px;padding:4px 10px;background:var(--green-dim);border-radius:6px;color:var(--green);cursor:pointer">Re-play Scenario 🔄</span></div>
+      </div>
+      <div class="threat-card warning">
+        <div class="threat-severity" style="color:var(--orange)">⚠️ WARNING · 8H AGO</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Phishing wave targets MetaMask users</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:8px">Fake emails asking users to "verify" wallets via spoofed MetaMask site. Over 500 wallets compromised so far.</div>
+        <div style="padding:6px 10px;background:rgba(139,92,246,0.08);border-radius:6px;margin-bottom:8px"><div style="font-size:10px;color:var(--purple)">🎮 Related → <strong>Chapter 1, Boss Fight</strong></div></div>
+        <div><span style="font-size:10px;padding:4px 10px;background:var(--surface2);border-radius:6px;color:var(--text-mid);cursor:pointer">Read More →</span></div>
+      </div>
+      <div class="threat-card info">
+        <div class="threat-severity" style="color:var(--cyan)">ℹ️ ALERT · 1D AGO</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">New honeypot token trending on DEX</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:8px">$SAFEMOON2 gaining traction but sell function is disabled. Classic honeypot pattern.</div>
+        <div><span style="font-size:10px;padding:4px 10px;background:var(--green-dim);border-radius:6px;color:var(--green);cursor:pointer">Scan with Scanner 🔍</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="p-bottom-nav"><div class="tab"><span class="icon">🏠</span>Wallet</div><div class="tab"><span class="icon">🗺️</span>Map</div><div class="tab"><span class="icon">🔍</span>Scanner</div><div class="tab"><span class="icon">📊</span>Stats</div><div class="tab"><span class="icon">⚙️</span>More</div></div>
+  </div></div></div>
+</div>
+
+<!-- ===== 19 CHALLENGE ===== -->
+<div class="section-divider" id="challenge">
+  <div class="screen-header"><div class="flow-tag new">NEW — VIRAL ENGINE</div><h2>19 — Challenge Creator</h2><p>Create scam scenarios and challenge friends. This drives virality — friends receive a link, play the scenario, then download the app. Show past challenges and their rekt rates.</p></div>
+  <div class="phone-container">
+    <div class="phone-wrapper"><div class="phone-label">CREATE CHALLENGE</div><div class="phone"><div class="status-bar"><span>← Back</span><span></span></div><div class="phone-content" style="padding-bottom:16px">
+      <div style="padding:14px 18px 6px"><h3 style="font-size:16px">🏆 Challenge a Friend</h3><div style="font-size:10px;color:var(--text-dim)">Pick a scam. See if they survive.</div></div>
+      <div class="p-section"><div class="p-title">Scam Type</div>
+        <div style="display:flex;flex-wrap:wrap;gap:0">
+          <div class="scam-type-pill selected">🎣 Phishing</div>
+          <div class="scam-type-pill">🍯 Honeypot</div>
+          <div class="scam-type-pill">🤝 Social</div>
+          <div class="scam-type-pill">📜 Contract</div>
+          <div class="scam-type-pill">🎭 Rug Pull</div>
+        </div>
+      </div>
+      <div class="p-section" style="padding-top:0"><div class="p-title">Difficulty</div>
+        <div class="difficulty-selector">
+          <div class="diff-btn">★<br><span style="font-size:8px">Easy</span></div>
+          <div class="diff-btn selected" style="border-color:var(--yellow);color:var(--yellow)">★★★<br><span style="font-size:8px">Medium</span></div>
+          <div class="diff-btn">★★★★★<br><span style="font-size:8px">Expert</span></div>
+        </div>
+      </div>
+      <div class="p-section" style="padding-top:0"><div class="p-title">Custom Message (optional)</div>
+        <div class="scan-input" style="min-height:48px;font-family:'Outfit',sans-serif;color:var(--text-mid)">Bet you can't spot this one 😈</div>
+      </div>
+      <div style="padding:0 16px"><div class="p-btn p-btn-primary">Create & Share 🔗</div></div>
+      <div class="p-section"><div class="p-title">My Challenges</div>
+        <div class="challenge-result-card"><span style="font-size:16px">🎣</span><div style="flex:1"><div style="font-size:11px;font-weight:600">Phishing DM ★★★</div><div style="font-size:9px;color:var(--text-dim)">Sent to 7 friends</div></div><div style="text-align:right"><div style="font-size:12px;color:var(--red);font-family:'JetBrains Mono',monospace;font-weight:700">4/7 rekt</div><div style="font-size:9px;color:var(--text-dim)">57% fell</div></div></div>
+        <div class="challenge-result-card"><span style="font-size:16px">🍯</span><div style="flex:1"><div style="font-size:11px;font-weight:600">Honeypot Token ★★</div><div style="font-size:9px;color:var(--text-dim)">Sent to 5 friends</div></div><div style="text-align:right"><div style="font-size:12px;color:var(--red);font-family:'JetBrains Mono',monospace;font-weight:700">2/5 rekt</div><div style="font-size:9px;color:var(--text-dim)">40% fell</div></div></div>
+        <div class="challenge-result-card"><span style="font-size:16px">📜</span><div style="flex:1"><div style="font-size:11px;font-weight:600">Approval Exploit ★★★★</div><div style="font-size:9px;color:var(--text-dim)">Sent to 3 friends</div></div><div style="text-align:right"><div style="font-size:12px;color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:700">0/3 rekt</div><div style="font-size:9px;color:var(--text-dim)">Smart friends!</div></div></div>
+      </div>
+    </div></div></div>
+
+    <div class="phone-wrapper"><div class="phone-label">RECEIVE CHALLENGE</div><div class="phone"><div class="status-bar"><span></span><span></span></div><div class="phone-content">
+      <div class="result-screen" style="background:radial-gradient(circle at 50% 40%, rgba(255,215,0,0.08) 0%, var(--bg) 60%)">
+        <div style="font-size:48px;margin-bottom:12px">🏆</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:4px">CHALLENGE FROM</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">ApeKing_VN</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:20px;padding:8px 14px;background:var(--surface);border-radius:8px">"Bet you can't spot this one 😈"</div>
+        <div style="font-size:40px;margin-bottom:12px">💀</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--red);font-weight:700;margin-bottom:4px">YOU GOT REKT</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">4 out of 7 friends also got rekt</div>
+        <div style="display:flex;gap:8px;width:100%">
+          <div class="p-btn p-btn-outline" style="flex:1;font-size:11px">🏆 Challenge Back</div>
+          <div class="p-btn p-btn-primary" style="flex:1;font-size:11px">📸 Share Result</div>
+        </div>
+        <div style="margin-top:14px"><div class="p-btn p-btn-outline" style="font-size:11px;width:100%;border-color:var(--green);color:var(--green)">Download REKT to play more →</div></div>
+      </div>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ===== 20-22 UTILITY ===== -->
+<div class="section-divider" id="daily">
+  <div class="screen-header"><div class="flow-tag">UTILITY</div><h2>20-22 — Daily Reward, Share Card, Settings</h2></div>
+  <div class="phone-container">
+    <div class="phone-wrapper"><div class="phone-label">20 — DAILY REWARD</div><div class="phone"><div class="status-bar"><span></span><span></span></div><div class="phone-content"><div class="reward-overlay"><div class="reward-chest">📦</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;margin-bottom:2px">DAILY REWARDS</div><div style="font-size:11px;color:var(--text-dim);margin-bottom:20px">Day 13 · Streak bonus 🔥</div><div class="p-card" style="width:100%;text-align:left"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px"><span>🪙 Staking yield</span><span style="color:var(--green)">+$23.40</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px"><span>⭐ Login XP</span><span style="color:var(--cyan)">+50 XP</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px"><span>🔥 Streak bonus</span><span style="color:var(--yellow)">+100 XP</span></div><div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;font-size:11px;font-weight:600"><span>Portfolio</span><span style="color:var(--green)">$47,855.55</span></div></div><div class="p-btn p-btn-primary" style="width:100%;margin-top:14px">Claim →</div></div></div></div></div>
+
+    <div class="phone-wrapper"><div class="phone-label">21 — SHARE CARDS</div><div class="phone"><div class="status-bar"><span></span><span></span></div><div class="phone-content">
+      <div style="padding:16px">
+        <div class="share-card" style="border-color:rgba(255,51,102,0.3);margin:0 0 12px 0"><div style="font-size:32px;margin-bottom:6px">💀</div><div style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--red);font-weight:700">GOT REKT</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--red);margin:2px 0 10px">-$34,201</div><div style="font-size:11px;color:var(--text-dim);line-height:1.7">Unlimited Approval Exploit<br>73% fell for this</div><div class="watermark">REKT — CRYPTO SURVIVAL RPG</div></div>
+        <div class="share-card" style="border-color:rgba(0,255,136,0.3);margin:0"><div style="font-size:32px;margin-bottom:6px">🛡️</div><div style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--green);font-weight:700">SURVIVED</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--green);margin:2px 0 10px">$47,832 safe</div><div style="font-size:11px;color:var(--text-dim);line-height:1.7">Blocked Fake DM · 13 day streak 🔥</div><div class="watermark">REKT — CRYPTO SURVIVAL RPG</div></div>
+      </div>
+    </div></div></div>
+
+    <div class="phone-wrapper"><div class="phone-label">22 — SETTINGS</div><div class="phone"><div class="status-bar"><span>9:41</span><span></span></div><div class="phone-content" style="padding-bottom:56px">
+      <div style="padding:14px 18px 6px"><h3 style="font-size:16px">Settings</h3></div>
+      <div class="p-section">
+        <div class="p-title">Account</div>
+        <div class="setting-row"><div class="left"><div class="setting-icon">👤</div><span style="font-size:12px">Profile</span></div><span style="font-size:11px;color:var(--text-dim)">ApeKing_VN →</span></div>
+        <div class="setting-row"><div class="left"><div class="setting-icon">🔑</div><span style="font-size:12px">Link Account</span></div><span style="font-size:11px;color:var(--text-dim)">Google →</span></div>
+        <div class="p-title" style="margin-top:12px">Preferences</div>
+        <div class="setting-row"><div class="left"><div class="setting-icon">🔔</div><span style="font-size:12px">Notifications</span></div><div class="toggle"></div></div>
+        <div class="setting-row"><div class="left"><div class="setting-icon">🔊</div><span style="font-size:12px">Sound</span></div><div class="toggle"></div></div>
+        <div class="setting-row"><div class="left"><div class="setting-icon">🌍</div><span style="font-size:12px">Language</span></div><span style="font-size:11px;color:var(--text-dim)">EN →</span></div>
+        <div class="p-title" style="margin-top:12px">Game</div>
+        <div class="setting-row"><div class="left"><div class="setting-icon">🔄</div><span style="font-size:12px">Reset Progress</span></div><span style="font-size:11px;color:var(--red)">Reset →</span></div>
+      </div>
+    </div><div class="p-bottom-nav"><div class="tab"><span class="icon">🏠</span>Wallet</div><div class="tab"><span class="icon">🗺️</span>Map</div><div class="tab"><span class="icon">🔍</span>Scanner</div><div class="tab"><span class="icon">📊</span>Stats</div><div class="tab active"><span class="icon">⚙️</span>More</div></div></div></div>
+  </div>
+</div>
+
+<!-- ===== FLOW MAP ===== -->
+<div class="section-divider" id="flowmap">
+  <div class="screen-header"><div class="flow-tag">REFERENCE</div><h2>Complete Flow Map</h2></div>
+  <div style="max-width:740px;margin:0 auto">
+    <div class="p-card" style="padding:20px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:2.2;color:var(--text-mid)">
+<pre style="white-space:pre-wrap">
+<span style="color:var(--green)">ONBOARDING:</span>
+Splash (01) → Character (02) → Daily Reward (20) → Wallet (03)
+
+<span style="color:var(--green)">BOTTOM TABS:</span>
+🏠 Wallet (03) ↔ 🗺️ Map (16) ↔ 🔍 Scanner (07) ↔ 📊 Stats (14) ↔ ⚙️ More (22)
+
+<span style="color:var(--green)">TOP BAR:</span>
+🏆 Challenge → Challenge Creator (19)
+🔔 Bell → Notifications (05) → Scenario (08)
+
+<span style="color:var(--green)">WALLET HOME (03):</span>
+Tap token → Portfolio Detail (04)
+Tap activity → Activity Feed (06)
+Daily open → Daily Reward (20) → Wallet (03)
+
+<span style="color:var(--green)">SCAM FLOW:</span>
+Trigger → Scenario (08) → Approval (09)
+  ├─ Rekt (10) → Education (12) → Share (21)
+  └─ Survived (11) → Education (12) → Share (21)
+
+<span style="color:var(--green)">NPC:</span>
+Story trigger → NPC Dialogue (13) → back to Wallet
+
+<span style="color:var(--green)">PROGRESSION:</span>
+Stats tab → Profile (14) → Gear (15) 
+Stats tab → Leaderboard (17)
+
+<span style="color:var(--orange)">POST-GAME:</span>
+Wallet tab integrates → Threat Feed (18)
+Scanner tab → Scam Scanner (07)
+🏆 button → Challenge Creator (19)
+Threat Feed → "Re-play" → Scenario (08)
+Scanner → "Game Connection" → Scenario (08)
+</pre>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:40px 0 70px;color:var(--text-dim);font-size:12px">
+  <div style="font-family:'JetBrains Mono',monospace;color:var(--green);font-size:13px;margin-bottom:6px">REKT // WIREFRAMES v2.0 · FINAL</div>
+  22 screens · All flows mapped · Ready to build 🚀
+</div>
+
+</main>
+
+<script>
+function go(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  event?.currentTarget?.classList.add('active');
+}
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) {
+    const id = e.target.id;
+    document.querySelectorAll('.nav-item').forEach(i => {
+      i.classList.remove('active');
+      if (i.getAttribute('onclick')?.includes("'" + id + "'")) i.classList.add('active');
+    });
+  }});
+}, { threshold: 0.2 });
+document.querySelectorAll('[id]').forEach(el => { if (el.closest('.main')) obs.observe(el); });
+</script>
+</body>
+</html>
