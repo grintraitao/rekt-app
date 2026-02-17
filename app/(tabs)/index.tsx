@@ -190,14 +190,19 @@ export default function WalletHomeScreen() {
 
         {/* Recent */}
         <View style={styles.section}>
-          <Text style={typography.sectionTitle}>RECENT</Text>
-          {recentActivity.map((item) => (
+          <View style={styles.sectionHeader}>
+            <Text style={typography.sectionTitle}>RECENT</Text>
+            <Pressable onPress={() => router.push("/activity" as never)}>
+              <Text style={styles.seeAll}>See all →</Text>
+            </Pressable>
+          </View>
+          {recentActivity.slice(0, 3).map((item) => (
             <Pressable
               key={item.id}
               style={activityTheme.row}
               onPress={
-                item.isSuspicious
-                  ? () => router.push("/scenario/fake-airdrop" as never)
+                item.isSuspicious && item.scamType
+                  ? () => router.push(`/scenario/${item.scamType}` as never)
                   : undefined
               }
             >
@@ -407,6 +412,19 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textDim,
     textAlign: "right",
+  },
+
+  /* Section header */
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  seeAll: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.sm,
+    color: colors.green,
+    marginBottom: spacing.sm,
   },
 
   /* Activity */
