@@ -1,0 +1,73 @@
+{
+  "id": "ch1-fake-support-dm",
+  "chapter": 1,
+  "difficulty": 1,
+  "type": "phishing",
+  "title": "Direct Message",
+  "subtitle": "from \"MetaMask Support\"",
+  "icon": "💬",
+  "npcAvatar": "🦊",
+  "npcName": "MetaMask Support",
+
+  "steps": [
+    {
+      "id": "intro",
+      "messages": [
+        { "sender": "system", "text": "💬 New conversation" },
+        { "sender": "npc", "text": "Hi! MetaMask Support here. We detected unauthorized access on your wallet 0x7f2...8a4." },
+        { "sender": "npc", "text": "Verify your identity immediately to secure funds." },
+        { "sender": "npc", "text": "⚠️ You have 10 minutes before wallet freeze." }
+      ],
+      "choices": [
+        { "id": "share-seed", "text": "🔑 Share seed phrase to verify", "outcome": "rekt" },
+        { "id": "inspect", "text": "🔍 Inspect their profile first", "outcome": "clue", "next": "inspect-result" },
+        { "id": "block", "text": "🚫 Ignore & block", "outcome": "survived" },
+        { "id": "sensei", "text": "🧠 Ask Sensei", "outcome": "hint" }
+      ]
+    },
+    {
+      "id": "inspect-result",
+      "messages": [
+        { "sender": "system", "text": "🔍 Inspecting profile..." },
+        { "sender": "system", "text": "⚠️ Account created 2 days ago · 0 verified badges · Name similar to official" },
+        { "sender": "npc", "text": "Please hurry! Your funds are at risk. We just need your 12-word recovery phrase." }
+      ],
+      "choices": [
+        { "id": "share-seed-2", "text": "🔑 Fine, share seed phrase", "outcome": "rekt" },
+        { "id": "block-2", "text": "🚫 Definitely a scam — block", "outcome": "survived" },
+        { "id": "question", "text": "❓ Ask them to prove they're real", "outcome": "clue", "next": "prove-it" },
+        { "id": "sensei-2", "text": "🧠 Ask Sensei", "outcome": "hint" }
+      ]
+    },
+    {
+      "id": "prove-it",
+      "messages": [
+        { "sender": "npc", "text": "We are VERIFIED MetaMask support! Check our badge!" },
+        { "sender": "system", "text": "⚠️ No verification badge found. Real MetaMask support never DMs users first." },
+        { "sender": "npc", "text": "Look, just paste your seed phrase or lose everything. Last chance." }
+      ],
+      "choices": [
+        { "id": "share-seed-3", "text": "🔑 Give them the seed phrase", "outcome": "rekt" },
+        { "id": "block-3", "text": "🚫 Block and report", "outcome": "survived" }
+      ]
+    }
+  ],
+
+  "hints": [
+    "Real support teams NEVER ask for seed phrases via DM.",
+    "Check account age and verification status before trusting anyone.",
+    "Official MetaMask does not have a support DM service."
+  ],
+
+  "education": {
+    "title": "Fake Support DM",
+    "summary": "Scammers impersonate official support to pressure you into sharing your seed phrase. Real support never DMs first and never asks for your private keys.",
+    "redFlags": [
+      "Unsolicited DM from 'support'",
+      "Urgency and threats (wallet freeze, time limits)",
+      "Asking for seed phrase or private keys",
+      "New account with no verification"
+    ],
+    "tip": "MetaMask and other wallet providers will NEVER DM you first or ask for your seed phrase. Always go through official websites."
+  }
+}
