@@ -133,7 +133,7 @@ export default function WalletHomeScreen() {
                   tokensTheme.row,
                   idx > 0 && styles.tokenDivider,
                 ]}
-                onPress={() => router.push("/portfolio-detail" as never)}
+                onPress={() => router.push(`/portfolio/${token.symbol}` as never)}
               >
                 {/* Token icon */}
                 <View
