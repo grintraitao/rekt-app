@@ -1,169 +1,426 @@
-import { StyleSheet, Text, View, ScrollView } from "react-native";
-import { colors, spacing, fontSize, fonts, borderRadius, card } from "../../src/theme";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  colors,
+  fonts,
+  fontSize,
+  spacing,
+  borderRadius,
+  layout,
+  typography,
+  quickAction as qaTheme,
+  tokens as tokensTheme,
+  activity as activityTheme,
+} from "../../src/theme";
+import { usePortfolioStore } from "../../src/store/portfolioStore";
 
-export default function WalletScreen() {
+/* ── Helpers ───────────────────────────────────────────────────────────────── */
+
+function formatDollars(n: number): { whole: string; cents: string } {
+  const [whole, cents] = n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).split(".");
+  return { whole, cents };
+}
+
+function formatPct(pct: number): string {
+  if (pct === 0) return "0.0%";
+  const sign = pct > 0 ? "+" : "";
+  return `${sign}${pct}%`;
+}
+
+/* ── Quick action data ─────────────────────────────────────────────────────── */
+
+const quickActions = [
+  { icon: "🔥", label: "Claim" },
+  { icon: "🔄", label: "Swap" },
+  { icon: "🦊", label: "Stake" },
+  { icon: "🔍", label: "Inspect" },
+];
+
+/* ── Component ─────────────────────────────────────────────────────────────── */
+
+export default function WalletHomeScreen() {
+  const router = useRouter();
+  const {
+    holdings,
+    recentActivity,
+    totalValue,
+    dailyChange,
+    dailyChangePct,
+    hp,
+    streak,
+    notificationCount,
+  } = usePortfolioStore();
+
+  const { whole, cents } = formatDollars(totalValue);
+  const hpPct = `${hp}%` as const;
+
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
+      {/* ── Top Bar (fixed) ──────────────────────────────────────────── */}
       <View style={styles.topBar}>
-        <View style={styles.topBarBtn}>
-          <Text style={styles.topBarBtnText}>🏆 Challenge</Text>
-        </View>
-        <Text style={styles.balance}>$47,832</Text>
-        <View style={styles.topBarBtn}>
-          <Text style={styles.topBarBtnText}>🔔 3</Text>
+        <Pressable
+          style={styles.challengeBtn}
+          onPress={() => router.push("/challenge" as never)}
+        >
+          <Text style={styles.challengeBtnText}>🏆 Challenge</Text>
+        </Pressable>
+        <View style={layout.row}>
+          <Text style={styles.streak}>🔥{streak}</Text>
+          <Pressable
+            style={styles.bellWrap}
+            onPress={() => router.push("/notifications" as never)}
+          >
+            <Text style={styles.bellIcon}>🔔</Text>
+            {notificationCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{notificationCount}</Text>
+              </View>
+            )}
+          </Pressable>
         </View>
       </View>
 
-      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-        {/* Portfolio Summary */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Portfolio</Text>
-          <Text style={styles.portfolioValue}>$47,832.00</Text>
-          <Text style={styles.portfolioChange}>+12.4% today</Text>
+      {/* ── HP Bar ───────────────────────────────────────────────────── */}
+      <View style={styles.hpRow}>
+        <Text style={styles.hpHeart}>❤️</Text>
+        <View style={styles.hpTrack}>
+          <View style={[styles.hpFill, { width: hpPct }]} />
+        </View>
+        <Text style={styles.hpLabel}>{hp}HP</Text>
+      </View>
+
+      {/* ── Scrollable content ───────────────────────────────────────── */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Balance */}
+        <View style={styles.balanceSection}>
+          <Text style={styles.balanceLabel}>Total Portfolio</Text>
+          <Text style={styles.balanceAmount}>
+            ${whole}
+            <Text style={styles.balanceCents}>.{cents}</Text>
+          </Text>
+          <Text style={styles.balanceChange}>
+            ▲ +${dailyChange.toLocaleString("en-US", { minimumFractionDigits: 2 })} ({dailyChangePct}%)
+          </Text>
         </View>
 
-        {/* Holdings */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Holdings</Text>
-          {[
-            { token: "BTC", amount: "0.82", value: "$31,204", change: "+5.2%" },
-            { token: "ETH", amount: "4.5", value: "$10,125", change: "+8.1%" },
-            { token: "SOL", amount: "120", value: "$6,503", change: "-2.3%" },
-          ].map((holding) => (
-            <View key={holding.token} style={styles.holdingRow}>
-              <View>
-                <Text style={styles.holdingToken}>{holding.token}</Text>
-                <Text style={styles.holdingAmount}>{holding.amount}</Text>
+        {/* Quick Actions */}
+        <View style={styles.quickActionsRow}>
+          {quickActions.map((qa) => (
+            <View key={qa.label} style={styles.quickActionItem}>
+              <View style={qaTheme.circle}>
+                <Text style={styles.qaIcon}>{qa.icon}</Text>
               </View>
-              <View style={styles.holdingRight}>
-                <Text style={styles.holdingValue}>{holding.value}</Text>
-                <Text
-                  style={[
-                    styles.holdingChange,
-                    { color: holding.change.startsWith("+") ? colors.green : colors.red },
-                  ]}
-                >
-                  {holding.change}
-                </Text>
-              </View>
+              <Text style={qaTheme.label}>{qa.label}</Text>
             </View>
           ))}
         </View>
 
-        {/* Recent Activity */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Recent Activity</Text>
-          <Text style={styles.activityPlaceholder}>
-            Scenario results will appear here...
-          </Text>
+        {/* Holdings */}
+        <View style={styles.section}>
+          <Text style={typography.sectionTitle}>HOLDINGS</Text>
+          <View style={styles.holdingsCard}>
+            {holdings.map((token, idx) => (
+              <Pressable
+                key={token.id}
+                style={[
+                  tokensTheme.row,
+                  idx > 0 && styles.tokenDivider,
+                ]}
+                onPress={() => router.push("/portfolio-detail" as never)}
+              >
+                {/* Token icon */}
+                <View
+                  style={[
+                    tokensTheme.icon,
+                    { backgroundColor: token.iconBg },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tokenIconText,
+                      { color: token.iconColor },
+                    ]}
+                  >
+                    {token.icon}
+                  </Text>
+                </View>
+
+                {/* Name + amount */}
+                <View style={styles.tokenInfo}>
+                  <Text
+                    style={[
+                      tokensTheme.name,
+                      token.id === "moonrise" && { color: colors.yellow },
+                    ]}
+                  >
+                    {token.name}
+                  </Text>
+                  <Text style={tokensTheme.amount}>{token.displayAmount}</Text>
+                </View>
+
+                {/* Price + pct */}
+                <View style={styles.tokenRight}>
+                  <Text style={tokensTheme.price}>
+                    ${token.value.toLocaleString()}
+                  </Text>
+                  <Text
+                    style={
+                      token.changePct > 0
+                        ? tokensTheme.pctUp
+                        : token.changePct < 0
+                          ? tokensTheme.pctDown
+                          : styles.pctNeutral
+                    }
+                  >
+                    {formatPct(token.changePct)}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Recent */}
+        <View style={styles.section}>
+          <Text style={typography.sectionTitle}>RECENT</Text>
+          {recentActivity.map((item) => (
+            <Pressable
+              key={item.id}
+              style={activityTheme.row}
+              onPress={
+                item.isSuspicious
+                  ? () => router.push("/scam-scenario" as never)
+                  : undefined
+              }
+            >
+              <View
+                style={[activityTheme.icon, { backgroundColor: item.iconBg }]}
+              >
+                <Text style={styles.activityIconText}>{item.icon}</Text>
+              </View>
+              <View style={styles.activityInfo}>
+                <Text
+                  style={[
+                    activityTheme.label,
+                    item.labelColor ? { color: item.labelColor } : undefined,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+                <Text
+                  style={[
+                    activityTheme.sub,
+                    item.subColor ? { color: item.subColor } : undefined,
+                  ]}
+                >
+                  {item.sub}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  activityTheme.value,
+                  item.valueColor ? { color: item.valueColor } : undefined,
+                ]}
+              >
+                {item.value}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
     </View>
   );
 }
 
+/* ── Styles ──────────────────────────────────────────────────────────────── */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
   },
+
+  /* Top bar */
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.sm,
     backgroundColor: colors.bg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  topBarBtn: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.sm,
+  challengeBtn: {
     borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
+    borderColor: colors.yellow,
+    backgroundColor: "rgba(255,215,0,0.1)",
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
-  topBarBtnText: {
+  challengeBtnText: {
     fontFamily: fonts.mono,
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.yellow,
   },
-  balance: {
+  streak: {
     fontFamily: fonts.mono,
-    fontSize: fontSize.xl,
-    fontWeight: "bold",
-    color: colors.textPrimary,
+    fontSize: fontSize.sm,
+    color: colors.textDim,
+    marginRight: spacing.sm,
   },
-  scrollArea: {
+  bellWrap: {
+    position: "relative",
+  },
+  bellIcon: {
+    fontSize: 16,
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -6,
+    backgroundColor: colors.red,
+    borderRadius: 6,
+    minWidth: 12,
+    height: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  badgeText: {
+    fontFamily: fonts.mono,
+    fontSize: 7,
+    fontWeight: "700",
+    color: colors.white,
+  },
+
+  /* HP bar */
+  hpRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
+  hpHeart: {
+    fontSize: 9,
+  },
+  hpTrack: {
+    flex: 1,
+    height: 3,
+    backgroundColor: colors.surface2,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  hpFill: {
+    height: "100%" as unknown as number,
+    backgroundColor: colors.green,
+    borderRadius: 2,
+  },
+  hpLabel: {
+    fontFamily: fonts.mono,
+    fontSize: 8,
+    color: colors.textDim,
+  },
+
+  /* Balance */
+  balanceSection: {
+    alignItems: "center",
+    paddingVertical: spacing.lg,
+  },
+  balanceLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textDim,
+  },
+  balanceAmount: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.display,
+    fontWeight: "700",
+    color: colors.white,
+    marginTop: 2,
+  },
+  balanceCents: {
+    fontSize: 16,
+    color: colors.textDim,
+  },
+  balanceChange: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    color: colors.green,
+    marginTop: 2,
+  },
+
+  /* Quick actions */
+  quickActionsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  quickActionItem: {
+    alignItems: "center",
+  },
+  qaIcon: {
+    fontSize: 14,
+  },
+
+  /* Sections */
+  section: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+
+  /* Holdings card */
+  holdingsCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+  },
+  tokenDivider: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.03)",
+  },
+  tokenIconText: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  tokenInfo: {
+    flex: 1,
+  },
+  tokenRight: {
+    alignItems: "flex-end",
+  },
+  pctNeutral: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.sm,
+    color: colors.textDim,
+    textAlign: "right",
+  },
+
+  /* Activity */
+  activityIconText: {
+    fontSize: 12,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+
+  /* Scroll */
+  scroll: {
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  card: {
-    ...card,
-  },
-  cardTitle: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 2,
-    marginBottom: spacing.sm,
-  },
-  portfolioValue: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xxl,
-    fontWeight: "bold",
-    color: colors.textPrimary,
-  },
-  portfolioChange: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.md,
-    color: colors.green,
-    marginTop: spacing.xs,
-  },
-  holdingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  holdingToken: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.lg,
-    fontWeight: "600",
-    color: colors.textPrimary,
-  },
-  holdingAmount: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  holdingRight: {
-    alignItems: "flex-end",
-  },
-  holdingValue: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-  },
-  holdingChange: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  activityPlaceholder: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-    fontStyle: "italic",
+    paddingBottom: spacing.lg,
   },
 });
