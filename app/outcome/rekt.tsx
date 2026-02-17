@@ -109,7 +109,15 @@ export default function RektScreen() {
           <Pressable
             style={styles.shareBtn}
             onPress={() => {
-              // TODO: navigate to share card screen when built
+              router.push({
+                pathname: "/share-card",
+                params: {
+                  type: "rekt",
+                  amount: amountLost,
+                  detail: attackType,
+                  stat: "73% fell for this",
+                },
+              } as never);
             }}
           >
             <Text style={styles.shareBtnText}>📸 Share</Text>

@@ -123,7 +123,15 @@ export default function SurvivedScreen() {
           <Pressable
             style={styles.shareBtn}
             onPress={() => {
-              // TODO: navigate to share card screen when built
+              router.push({
+                pathname: "/share-card",
+                params: {
+                  type: "survived",
+                  amount: amountSaved,
+                  detail: `Blocked ${blockedAttack}`,
+                  stat: `${displayStreak} day streak 🔥`,
+                },
+              } as never);
             }}
           >
             <Text style={styles.shareBtnText}>📸 Share</Text>
