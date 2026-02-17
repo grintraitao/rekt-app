@@ -1,0 +1,36 @@
+{
+  "id": "satoshi-sensei",
+  "npcName": "SATOSHI SENSEI",
+  "npcEmoji": "\ud83e\uddd9",
+  "nameColor": "#00ff88",
+  "borderColor": "#2a2a3a",
+  "dialogues": [
+    {
+      "id": "post-approval-attack",
+      "trigger": "ch1-approval-scam",
+      "dialogueText": [
+        "You survived the approval attack. Good. But survival is not mastery.",
+        "Why did you hesitate?"
+      ],
+      "choices": [
+        {
+          "text": "\ud83d\udde3\ufe0f \"The free tokens were tempting...\"",
+          "outcome": "tempted"
+        },
+        {
+          "text": "\ud83d\udde3\ufe0f \"I wasn't sure if it was real\"",
+          "outcome": "uncertain"
+        },
+        {
+          "text": "\ud83d\udde3\ufe0f \"I checked the amount first\"",
+          "outcome": "cautious"
+        }
+      ],
+      "followUp": {
+        "tempted": "Greed is the oldest exploit. Every scammer knows this. Remember — if the reward is free, YOU are the product.",
+        "uncertain": "Doubt is your first shield. But you must turn doubt into verification. Check the contract, not your feelings.",
+        "cautious": "Good instinct. Reading before signing is the mark of a survivor. Keep that habit."
+      }
+    }
+  ]
+}

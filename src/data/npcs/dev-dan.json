@@ -1,0 +1,43 @@
+{
+  "id": "dev-dan",
+  "npcName": "DEV DAN",
+  "npcSubtitle": "$MOONRISE",
+  "npcEmoji": "\ud83d\udc68\u200d\ud83d\udcbb",
+  "nameColor": "#ffffff",
+  "borderColor": "#ffd700",
+  "warningHint": "\u26a0\ufe0f Something feels off...",
+  "dialogues": [
+    {
+      "id": "staking-pool-pitch",
+      "trigger": "ch1-world-map",
+      "dialogueText": [
+        "Hey! Special staking pool for early holders \u2014 200% APY for 48 hours.",
+        "Want the link?"
+      ],
+      "choices": [
+        {
+          "text": "\ud83e\udd11 \"Yes! Send me the link!\"",
+          "outcome": "rekt"
+        },
+        {
+          "text": "\ud83d\udd0d \"Can I see the contract?\"",
+          "outcome": "cautious"
+        },
+        {
+          "text": "\ud83e\uddd0 \"How do I know you're legit?\"",
+          "outcome": "suspicious"
+        },
+        {
+          "text": "\ud83d\udeab \"Sounds too good\"",
+          "outcome": "survived"
+        }
+      ],
+      "followUp": {
+        "rekt": "Sweet! Here's the link: stake-moonrise.xyz \u2014 connect your wallet and you're in!",
+        "cautious": "Uh... yeah it's on the blockchain bro, totally transparent. Just connect and you'll see it.",
+        "suspicious": "I'm Dan, lead dev of $MOONRISE! Check my profile \u2014 been in crypto since 2017. Trust me.",
+        "survived": "Your loss man. The pool fills up fast. Don't come crying when $MOONRISE hits $100."
+      }
+    }
+  ]
+}
