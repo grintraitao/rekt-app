@@ -118,8 +118,7 @@ export default function RektScreen() {
           <Pressable
             style={styles.learnBtn}
             onPress={() => {
-              // TODO: navigate to education post-mortem when built
-              router.replace("/(tabs)" as never);
+              router.replace(`/education/${scenarioId}` as never);
             }}
           >
             <Text style={styles.learnBtnText}>Learn Why →</Text>

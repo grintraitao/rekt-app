@@ -61,11 +61,25 @@
   "education": {
     "title": "Unlimited Token Approval",
     "summary": "Scammers trick you into granting unlimited access to your tokens via malicious contract approvals.",
+    "category": "Smart Contract",
+    "difficulty": 2,
+    "steps": [
+      "Fake airdrop appeared in your activity feed.",
+      "Approval amount was set to UNLIMITED — giving the contract access to all your tokens.",
+      "The contract could drain all USDC at any time without further permission.",
+      "Attacker waited, then transferred everything out of your wallet."
+    ],
     "redFlags": [
       "🚩 UNLIMITED token approval amount",
       "🚩 Unverified contract address",
       "🚩 Suspiciously low gas fees",
       "🚩 \"Free\" airdrop requiring contract approval"
+    ],
+    "irlTips": [
+      "✅ Check approval amounts before signing",
+      "✅ Use revoke.cash to review old approvals",
+      "✅ Never claim unsolicited airdrops",
+      "✅ Verify contract on Etherscan first"
     ],
     "tip": "Always check the approval amount and contract verification before signing any transaction."
   }

@@ -37,7 +37,11 @@ export type ScenarioStep = {
 export type ScenarioEducation = {
   title: string;
   summary: string;
+  category?: string;
+  difficulty?: number;
+  steps: string[];
   redFlags: string[];
+  irlTips: string[];
   tip: string;
 };
 

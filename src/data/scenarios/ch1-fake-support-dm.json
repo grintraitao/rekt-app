@@ -62,11 +62,25 @@
   "education": {
     "title": "Fake Support DM",
     "summary": "Scammers impersonate official support to pressure you into sharing your seed phrase. Real support never DMs first and never asks for your private keys.",
+    "category": "Social Engineering",
+    "difficulty": 1,
+    "steps": [
+      "Scammer created a fake \"MetaMask Support\" account with a similar name and avatar.",
+      "They sent an unsolicited DM claiming unauthorized access was detected on your wallet.",
+      "Urgency was manufactured — a fake 10-minute countdown to pressure you into acting fast.",
+      "The goal: trick you into revealing your 12-word seed phrase, giving full wallet access."
+    ],
     "redFlags": [
-      "Unsolicited DM from 'support'",
-      "Urgency and threats (wallet freeze, time limits)",
-      "Asking for seed phrase or private keys",
-      "New account with no verification"
+      "🚩 Unsolicited DM from 'support'",
+      "🚩 Urgency and threats (wallet freeze, time limits)",
+      "🚩 Asking for seed phrase or private keys",
+      "🚩 New account with no verification"
+    ],
+    "irlTips": [
+      "✅ Official support NEVER contacts you via DM first",
+      "✅ Never share your seed phrase with anyone, ever",
+      "✅ Verify support through official websites only",
+      "✅ Check account age and verification badges"
     ],
     "tip": "MetaMask and other wallet providers will NEVER DM you first or ask for your seed phrase. Always go through official websites."
   }

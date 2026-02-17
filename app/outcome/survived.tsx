@@ -132,8 +132,7 @@ export default function SurvivedScreen() {
           <Pressable
             style={styles.continueBtn}
             onPress={() => {
-              // TODO: navigate to education post-mortem when built
-              router.replace("/(tabs)" as never);
+              router.replace(`/education/${scenarioId}` as never);
             }}
           >
             <Text style={styles.continueBtnText}>Continue →</Text>
