@@ -152,7 +152,14 @@ export default function ScamScenarioScreen() {
           },
         } as never);
       } else {
-        router.replace("/outcome/survived" as never);
+        router.replace({
+          pathname: "/outcome/survived",
+          params: {
+            amountSaved: "47832",
+            blockedAttack: scenario?.education?.title ?? "Unknown Scam",
+            scenarioId: scenario?.id ?? "",
+          },
+        } as never);
       }
     }, 800);
     return () => clearTimeout(timer);

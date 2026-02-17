@@ -52,6 +52,7 @@ type PortfolioState = {
   streak: number;
   takeDamage: (amount: number) => void;
   subtractValue: (amount: number) => void;
+  incrementStreak: () => void;
 };
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
@@ -285,5 +286,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   subtractValue: (amount) => {
     const { totalValue } = get();
     set({ totalValue: Math.max(0, totalValue - amount) });
+  },
+
+  incrementStreak: () => {
+    const { streak } = get();
+    set({ streak: streak + 1 });
   },
 }));

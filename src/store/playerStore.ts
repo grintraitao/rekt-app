@@ -12,6 +12,14 @@ type PlayerState = {
   canClaimToday: () => boolean;
   claimDailyReward: () => void;
   resetStreak: () => void;
+
+  // XP & rewards
+  xp: number;
+  securityTokens: number;
+  completedScenarios: string[];
+  addXp: (amount: number) => void;
+  addSecurityTokens: (amount: number) => void;
+  completeScenario: (scenarioId: string) => void;
 };
 
 function todayISO(): string {
@@ -48,4 +56,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   resetStreak: () => set({ streak: 0 }),
+
+  // XP & rewards
+  xp: 0,
+  securityTokens: 0,
+  completedScenarios: [],
+
+  addXp: (amount) => set((s) => ({ xp: s.xp + amount })),
+
+  addSecurityTokens: (amount) =>
+    set((s) => ({ securityTokens: s.securityTokens + amount })),
+
+  completeScenario: (scenarioId) =>
+    set((s) => ({
+      completedScenarios: s.completedScenarios.includes(scenarioId)
+        ? s.completedScenarios
+        : [...s.completedScenarios, scenarioId],
+    })),
 }));
