@@ -138,12 +138,19 @@ export default function ScamScenarioScreen() {
     return () => clearTimeout(timer);
   }, [chatHistory.length, showChoices]);
 
-  // Navigate on outcome
+  // Navigate on outcome — pass scenario context to outcome screens
   useEffect(() => {
     if (!outcome) return;
     const timer = setTimeout(() => {
       if (outcome === "rekt") {
-        router.replace("/outcome/rekt" as never);
+        router.replace({
+          pathname: "/outcome/rekt",
+          params: {
+            amountLost: "34201",
+            attackType: scenario?.education?.title ?? "Unknown Scam",
+            scenarioId: scenario?.id ?? "",
+          },
+        } as never);
       } else {
         router.replace("/outcome/survived" as never);
       }

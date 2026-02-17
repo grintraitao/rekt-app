@@ -11,6 +11,7 @@ type PlayerState = {
   lastClaimDate: string; // ISO date string, e.g. "2026-02-17"
   canClaimToday: () => boolean;
   claimDailyReward: () => void;
+  resetStreak: () => void;
 };
 
 function todayISO(): string {
@@ -45,4 +46,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const newStreak = wasYesterday(lastClaimDate) ? streak + 1 : 1;
     set({ streak: newStreak, lastClaimDate: today });
   },
+
+  resetStreak: () => set({ streak: 0 }),
 }));

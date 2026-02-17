@@ -50,9 +50,11 @@ type PortfolioState = {
   hp: number;
   maxHp: number;
   streak: number;
+  takeDamage: (amount: number) => void;
+  subtractValue: (amount: number) => void;
 };
 
-export const usePortfolioStore = create<PortfolioState>(() => ({
+export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   holdings: [
     {
       id: "eth",
@@ -274,4 +276,14 @@ export const usePortfolioStore = create<PortfolioState>(() => ({
   hp: 80,
   maxHp: 100,
   streak: 13,
+
+  takeDamage: (amount) => {
+    const { hp } = get();
+    set({ hp: Math.max(0, hp - amount) });
+  },
+
+  subtractValue: (amount) => {
+    const { totalValue } = get();
+    set({ totalValue: Math.max(0, totalValue - amount) });
+  },
 }));
