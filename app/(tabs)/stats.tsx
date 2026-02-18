@@ -13,8 +13,6 @@ import {
   CLASS_META,
   getAchievements,
 } from "../../src/store/playerStore";
-import { usePortfolioStore } from "../../src/store/portfolioStore";
-
 /* ── Stat bar ─────────────────────────────────────────────────────────────────── */
 
 function StatBar({
@@ -58,7 +56,7 @@ export default function StatsScreen() {
   const survived = usePlayerStore((s) => s.survived);
   const rektCount = usePlayerStore((s) => s.rektCount);
   const securityTokens = usePlayerStore((s) => s.securityTokens);
-  const hp = usePortfolioStore((s) => s.hp);
+  const stats = usePlayerStore((s) => s.stats);
 
   const classMeta = CLASS_META[selectedClass ?? "ape"];
   const lvl = getLevelProgress(xp);
@@ -67,11 +65,12 @@ export default function StatsScreen() {
 
   const achievements = getAchievements({ survived, rektCount, streak, securityTokens });
 
-  // Derive stat values from game state
-  const security = Math.min(Math.round(survived * 3.5 + securityTokens * 2), 100) || 65;
-  const detection = Math.min(Math.round(survived * 2.5 + streak * 0.5), 100) || 48;
-  const wealth = Math.min(Math.round(72 + survived * 0.5 - rektCount * 3), 100) || 72;
-  const knowledge = Math.min(Math.round(survived * 2.8 + lvl.level * 2), 100) || 55;
+  // Use actual player stats from store
+  const security = stats.security;
+  const detection = stats.detection;
+  const wealth = stats.wealth;
+  const knowledge = stats.knowledge;
+  const hp = stats.hp;
 
   return (
     <View style={styles.container}>

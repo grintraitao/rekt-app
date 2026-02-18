@@ -12,6 +12,7 @@ import {
   tokens as tokensTheme,
   activity as activityTheme,
 } from "../../src/theme";
+import { usePlayerStore } from "../../src/store/playerStore";
 import { usePortfolioStore } from "../../src/store/portfolioStore";
 import { useNotificationStore } from "../../src/store/notificationStore";
 
@@ -31,6 +32,20 @@ function formatPct(pct: number): string {
   return `${sign}${pct}%`;
 }
 
+function txDisplayInfo(type: string): { icon: string; bg: string } {
+  switch (type) {
+    case "received": return { icon: "📥", bg: "rgba(0,255,136,0.1)" };
+    case "sent": return { icon: "📤", bg: "rgba(255,255,255,0.05)" };
+    case "swap": return { icon: "🔄", bg: "rgba(0,200,255,0.1)" };
+    case "staking-reward": return { icon: "🪙", bg: "rgba(255,215,0,0.1)" };
+    case "airdrop": return { icon: "🎁", bg: "rgba(200,100,255,0.1)" };
+    case "investment-return": return { icon: "📈", bg: "rgba(0,255,136,0.1)" };
+    case "rekt-loss": return { icon: "💀", bg: "rgba(255,51,102,0.1)" };
+    case "dust-attack": return { icon: "⚠️", bg: "rgba(255,140,0,0.1)" };
+    default: return { icon: "📋", bg: "rgba(255,255,255,0.05)" };
+  }
+}
+
 /* ── Quick action data ─────────────────────────────────────────────────────── */
 
 const quickActions = [
@@ -44,15 +59,13 @@ const quickActions = [
 
 export default function WalletHomeScreen() {
   const router = useRouter();
-  const {
-    holdings,
-    recentActivity,
-    totalValue,
-    dailyChange,
-    dailyChangePct,
-    hp,
-    streak,
-  } = usePortfolioStore();
+  const holdings = usePortfolioStore((s) => s.holdings);
+  const totalValue = usePortfolioStore((s) => s.totalValue);
+  const dailyChange = usePortfolioStore((s) => s.dailyChange);
+  const dailyChangePct = usePortfolioStore((s) => s.dailyChangePct);
+  const transactions = usePortfolioStore((s) => s.transactions);
+  const hp = usePlayerStore((s) => s.stats.hp);
+  const streak = usePlayerStore((s) => s.streak);
   const notificationCount = useNotificationStore((s) => s.unreadCount());
 
   const { whole, cents } = formatDollars(totalValue);
@@ -140,7 +153,7 @@ export default function WalletHomeScreen() {
                 <View
                   style={[
                     tokensTheme.icon,
-                    { backgroundColor: token.iconBg },
+                    { backgroundColor: token.iconColor + "20" },
                   ]}
                 >
                   <Text
@@ -149,7 +162,7 @@ export default function WalletHomeScreen() {
                       { color: token.iconColor },
                     ]}
                   >
-                    {token.icon}
+                    {token.emoji}
                   </Text>
                 </View>
 
@@ -163,24 +176,24 @@ export default function WalletHomeScreen() {
                   >
                     {token.name}
                   </Text>
-                  <Text style={tokensTheme.amount}>{token.displayAmount}</Text>
+                  <Text style={tokensTheme.amount}>{token.amount} {token.symbol}</Text>
                 </View>
 
                 {/* Price + pct */}
                 <View style={styles.tokenRight}>
                   <Text style={tokensTheme.price}>
-                    ${token.value.toLocaleString()}
+                    ${Math.round(token.amount * token.pricePerUnit).toLocaleString()}
                   </Text>
                   <Text
                     style={
-                      token.changePct > 0
+                      token.dailyChangePct > 0
                         ? tokensTheme.pctUp
-                        : token.changePct < 0
+                        : token.dailyChangePct < 0
                           ? tokensTheme.pctDown
                           : styles.pctNeutral
                     }
                   >
-                    {formatPct(token.changePct)}
+                    {formatPct(token.dailyChangePct)}
                   </Text>
                 </View>
               </Pressable>
@@ -196,49 +209,50 @@ export default function WalletHomeScreen() {
               <Text style={styles.seeAll}>See all →</Text>
             </Pressable>
           </View>
-          {recentActivity.slice(0, 3).map((item) => (
-            <Pressable
-              key={item.id}
-              style={activityTheme.row}
-              onPress={
-                item.isSuspicious && item.scamType
-                  ? () => router.push(`/scenario/${item.scamType}` as never)
-                  : undefined
-              }
-            >
-              <View
-                style={[activityTheme.icon, { backgroundColor: item.iconBg }]}
+          {transactions.slice(0, 3).map((tx) => {
+            const { icon, bg } = txDisplayInfo(tx.type);
+            const amtStr = tx.amount >= 0
+              ? `+$${tx.amount.toLocaleString()}`
+              : `-$${Math.abs(tx.amount).toLocaleString()}`;
+            return (
+              <Pressable
+                key={tx.id}
+                style={activityTheme.row}
+                onPress={
+                  tx.isSuspicious && tx.linkedScenarioId
+                    ? () => router.push(`/scenario/${tx.linkedScenarioId}` as never)
+                    : undefined
+                }
               >
-                <Text style={styles.activityIconText}>{item.icon}</Text>
-              </View>
-              <View style={styles.activityInfo}>
+                <View
+                  style={[activityTheme.icon, { backgroundColor: bg }]}
+                >
+                  <Text style={styles.activityIconText}>{icon}</Text>
+                </View>
+                <View style={styles.activityInfo}>
+                  <Text
+                    style={[
+                      activityTheme.label,
+                      tx.isSuspicious ? { color: colors.yellow } : undefined,
+                    ]}
+                  >
+                    {tx.label}
+                  </Text>
+                  <Text style={activityTheme.sub}>
+                    {tx.sublabel}
+                  </Text>
+                </View>
                 <Text
                   style={[
-                    activityTheme.label,
-                    item.labelColor ? { color: item.labelColor } : undefined,
+                    activityTheme.value,
+                    { color: tx.amount >= 0 ? colors.green : colors.red },
                   ]}
                 >
-                  {item.label}
+                  {amtStr}
                 </Text>
-                <Text
-                  style={[
-                    activityTheme.sub,
-                    item.subColor ? { color: item.subColor } : undefined,
-                  ]}
-                >
-                  {item.sub}
-                </Text>
-              </View>
-              <Text
-                style={[
-                  activityTheme.value,
-                  item.valueColor ? { color: item.valueColor } : undefined,
-                ]}
-              >
-                {item.value}
-              </Text>
-            </Pressable>
-          ))}
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
     </View>

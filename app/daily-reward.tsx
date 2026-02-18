@@ -17,14 +17,25 @@ import {
 } from "../src/theme";
 import { usePlayerStore } from "../src/store/playerStore";
 import { usePortfolioStore } from "../src/store/portfolioStore";
+import { useGameStore } from "../src/store/gameStore";
+import { EconomyEngine } from "../src/engine/EconomyEngine";
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
 
 export default function DailyRewardScreen() {
   const router = useRouter();
-  const { streak, claimDailyReward, addXP: addXp } = usePlayerStore();
-  const totalValue = usePortfolioStore((s) => s.totalValue);
+  const { streak, claimDailyReward, addXP: addXp, addCoins, playerClass, level } = usePlayerStore();
+  const { totalValue, holdings, addFunds, simulateMarketDay } = usePortfolioStore();
+  const advanceGameDay = useGameStore((s) => s.advanceGameDay);
   const [claimed, setClaimed] = useState(false);
+
+  // Calculate rewards using EconomyEngine
+  const rewards = EconomyEngine.calculateDailyReward(
+    holdings,
+    streak,
+    level,
+    playerClass ?? "ape",
+  );
 
   // Float animation for chest
   const floatAnim = useRef(new Animated.Value(0)).current;
@@ -49,10 +60,25 @@ export default function DailyRewardScreen() {
   // Flash animation on claim
   const flashAnim = useRef(new Animated.Value(0)).current;
 
+  const stakingYield = rewards.stakingYield;
+  const loginXP = rewards.loginXP;
+  const streakBonusXP = rewards.streakBonusXP;
+  const bonusCoins = rewards.bonusCoins;
+  const newTotal = totalValue + stakingYield;
+
   function handleClaim() {
     if (claimed) return;
+
+    // Apply rewards
     claimDailyReward();
-    addXp(loginXP + streakBonus);
+    addXp(loginXP + streakBonusXP);
+    if (stakingYield > 0) addFunds(stakingYield, "staking-yield");
+    if (bonusCoins > 0) addCoins(bonusCoins);
+
+    // Advance game state
+    advanceGameDay();
+    simulateMarketDay();
+
     setClaimed(true);
 
     Animated.sequence([
@@ -70,11 +96,6 @@ export default function DailyRewardScreen() {
       router.replace("/(tabs)" as never);
     });
   }
-
-  const stakingYield = 23.40;
-  const loginXP = 50;
-  const streakBonus = 100;
-  const newTotal = totalValue + stakingYield;
 
   return (
     <View style={styles.container}>
@@ -98,7 +119,10 @@ export default function DailyRewardScreen() {
       <View style={styles.rewardCard}>
         <RewardRow emoji="🪙" label="Staking yield" value={`+$${stakingYield.toFixed(2)}`} valueColor={colors.green} />
         <RewardRow emoji="⭐" label="Login XP" value={`+${loginXP} XP`} valueColor={colors.cyan} />
-        <RewardRow emoji="🔥" label="Streak bonus" value={`+${streakBonus} XP`} valueColor={colors.yellow} />
+        <RewardRow emoji="🔥" label="Streak bonus" value={`+${streakBonusXP} XP`} valueColor={colors.yellow} />
+        {bonusCoins > 0 && (
+          <RewardRow emoji="💰" label="Streak coins" value={`+${bonusCoins}`} valueColor={colors.yellow} />
+        )}
 
         <View style={styles.divider} />
 

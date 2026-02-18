@@ -10,6 +10,8 @@ import {
 } from "../../src/theme";
 import { usePlayerStore } from "../../src/store/playerStore";
 import { usePortfolioStore } from "../../src/store/portfolioStore";
+import { useGameStore } from "../../src/store/gameStore";
+import { ProgressionEngine, XP_REWARDS } from "../../src/engine/ProgressionEngine";
 
 /* ── Screen ───────────────────────────────────────────────────────────────── */
 
@@ -26,22 +28,36 @@ export default function RektScreen() {
   }>();
 
   const lostNum = parseInt(amountLost, 10) || 34201;
-  const streak = usePortfolioStore((s) => s.streak);
-  const takeDamage = usePortfolioStore((s) => s.takeDamage);
-  const subtractValue = usePortfolioStore((s) => s.subtractValue);
-  const resetStreak = usePlayerStore((s) => s.breakStreak);
+  const streak = usePlayerStore((s) => s.streak);
+  const takeDamage = usePlayerStore((s) => s.takeDamage);
+  const drainFunds = usePortfolioStore((s) => s.drainFunds);
+  const breakStreak = usePlayerStore((s) => s.breakStreak);
   const recordRekt = usePlayerStore((s) => s.recordRekt);
+  const addXP = usePlayerStore((s) => s.addXP);
+  const completeScenarioPlayer = usePlayerStore((s) => s.completeScenario);
+  const completeScenarioGame = useGameStore((s) => s.completeScenario);
+  const equippedGear = usePlayerStore((s) => s.equippedGear);
 
   // ── Shake animation ──────────────────────────────────────────────────
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Calculate damage with ProgressionEngine (base 20 HP)
+    const hpLoss = ProgressionEngine.calculateDamage(20, equippedGear, "unknown");
+
     // Apply game penalties
-    takeDamage(20);
-    subtractValue(lostNum);
-    resetStreak();
+    takeDamage(hpLoss);
+    drainFunds(lostNum, attackType);
+    breakStreak();
     recordRekt();
+    addXP(XP_REWARDS.scenarioRekt);
+
+    // Track in stores
+    if (scenarioId) {
+      completeScenarioPlayer(scenarioId);
+      completeScenarioGame(scenarioId, "rekt", []);
+    }
 
     // Entry animations: shake then fade in
     Animated.sequence([

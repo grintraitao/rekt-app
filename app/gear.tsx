@@ -9,6 +9,9 @@ import {
   borderRadius,
 } from "../src/theme";
 import { useGearStore, GearItem } from "../src/store/gearStore";
+import { usePlayerStore } from "../src/store/playerStore";
+import { useGameStore } from "../src/store/gameStore";
+import { GearEngine } from "../src/engine/GearEngine";
 
 /* ── Gear Card (inline-expandable) ─────────────────────────────────────────── */
 
@@ -16,19 +19,26 @@ function GearCard({
   item,
   equipped,
   onToggle,
+  canUnlockNow,
+  unlockReason,
+  onUnlock,
 }: {
   item: GearItem;
   equipped: boolean;
   onToggle: () => void;
+  canUnlockNow?: boolean;
+  unlockReason?: string;
+  onUnlock?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const locked = !item.unlocked;
 
   return (
     <Pressable
-      style={[styles.slot, locked && styles.slotLocked]}
+      style={[styles.slot, locked && !canUnlockNow && styles.slotLocked]}
       onPress={() => {
         if (!locked) setExpanded((prev) => !prev);
+        else if (canUnlockNow) setExpanded((prev) => !prev);
       }}
     >
       <View style={styles.slotRow}>
@@ -39,12 +49,16 @@ function GearCard({
 
         {/* Info */}
         <View style={styles.slotInfo}>
-          <Text style={[styles.gearName, locked && styles.textLocked]}>
+          <Text style={[styles.gearName, locked && !canUnlockNow && styles.textLocked]}>
             {item.name}
           </Text>
           <Text style={styles.gearSlotType}>{item.slot}</Text>
           <Text style={styles.gearEffect}>
-            {locked ? item.unlockHint : item.effect}
+            {locked
+              ? canUnlockNow
+                ? "Ready to unlock!"
+                : unlockReason ?? item.unlockHint
+              : item.effect}
           </Text>
         </View>
 
@@ -55,6 +69,21 @@ function GearCard({
           </View>
         )}
       </View>
+
+      {/* Unlock section for locked items that can be unlocked */}
+      {expanded && locked && canUnlockNow && onUnlock && (
+        <View style={styles.expandedSection}>
+          <Text style={styles.expandedDesc}>{item.description}</Text>
+          <Pressable
+            style={[styles.actionBtn, styles.actionBtnPrimary]}
+            onPress={onUnlock}
+          >
+            <Text style={[styles.actionBtnText, styles.actionBtnTextPrimary]}>
+              Unlock
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Expanded detail */}
       {expanded && !locked && (
@@ -96,11 +125,45 @@ export default function GearScreen() {
   const allGear = useGearStore((s) => s.allGear);
   const toggleGear = useGearStore((s) => s.toggleGear);
 
+  const playerLevel = usePlayerStore((s) => s.level);
+  const securityTokens = usePlayerStore((s) => s.securityTokens);
+  const unlockGear = usePlayerStore((s) => s.unlockGear);
+  const completedChapters = useGameStore((s) => {
+    const chapters = s.chapters;
+    return chapters
+      .filter((ch) => ch.scenarioIds.every((id) => s.completedScenarios.includes(id)))
+      .map((ch) => ch.id);
+  });
+
   const equippedGear = allGear.filter((g) => equippedIds.includes(g.id));
   const availableGear = allGear.filter((g) => !equippedIds.includes(g.id));
 
   const equippedCount = equippedIds.length;
   const totalCount = allGear.length;
+
+  // Check unlock status for each gear item
+  function getUnlockInfo(item: GearItem) {
+    if (item.unlocked) return { canUnlock: false, reason: undefined };
+    const result = GearEngine.canUnlock(
+      item.id,
+      playerLevel,
+      securityTokens,
+      completedChapters,
+      [],
+    );
+    return { canUnlock: result.canUnlock, reason: result.reason };
+  }
+
+  function handleUnlock(item: GearItem) {
+    // Update gearStore to mark as unlocked
+    useGearStore.setState((s) => ({
+      allGear: s.allGear.map((g) =>
+        g.id === item.id ? { ...g, unlocked: true } : g,
+      ),
+    }));
+    // Track in playerStore
+    unlockGear(item.id);
+  }
 
   return (
     <View style={styles.container}>
@@ -145,14 +208,20 @@ export default function GearScreen() {
         {/* ── Available section ─────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>AVAILABLE</Text>
-          {availableGear.map((item) => (
-            <GearCard
-              key={item.id}
-              item={item}
-              equipped={false}
-              onToggle={() => toggleGear(item.id)}
-            />
-          ))}
+          {availableGear.map((item) => {
+            const { canUnlock, reason } = getUnlockInfo(item);
+            return (
+              <GearCard
+                key={item.id}
+                item={item}
+                equipped={false}
+                onToggle={() => toggleGear(item.id)}
+                canUnlockNow={canUnlock}
+                unlockReason={reason}
+                onUnlock={() => handleUnlock(item)}
+              />
+            );
+          })}
         </View>
       </ScrollView>
     </View>

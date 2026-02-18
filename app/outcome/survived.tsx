@@ -10,10 +10,11 @@ import {
 } from "../../src/theme";
 import { usePlayerStore } from "../../src/store/playerStore";
 import { usePortfolioStore } from "../../src/store/portfolioStore";
+import { useGameStore } from "../../src/store/gameStore";
+import { ProgressionEngine, XP_REWARDS } from "../../src/engine/ProgressionEngine";
 
 /* ── Constants ─────────────────────────────────────────────────────────────── */
 
-const XP_REWARD = 350;
 const TOKEN_REWARD = 2;
 
 /* ── Screen ───────────────────────────────────────────────────────────────── */
@@ -31,12 +32,21 @@ export default function SurvivedScreen() {
   }>();
 
   const savedNum = parseInt(amountSaved, 10) || 47832;
-  const streak = usePortfolioStore((s) => s.streak);
-  const incrementStreak = usePortfolioStore((s) => s.incrementStreak);
+  const streak = usePlayerStore((s) => s.streak);
   const addXp = usePlayerStore((s) => s.addXP);
   const addSecurityTokens = usePlayerStore((s) => s.addSecurityTokens);
-  const completeScenario = usePlayerStore((s) => s.completeScenario);
+  const completeScenarioPlayer = usePlayerStore((s) => s.completeScenario);
   const recordSurvive = usePlayerStore((s) => s.recordSurvive);
+  const playerClass = usePlayerStore((s) => s.playerClass);
+  const completeScenarioGame = useGameStore((s) => s.completeScenario);
+
+  // Calculate XP reward using ProgressionEngine
+  const XP_REWARD = ProgressionEngine.calculateScenarioXP(
+    "survived",
+    1,
+    false,
+    streak,
+  );
 
   // ── Pulse / glow animation ───────────────────────────────────────────
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -46,9 +56,11 @@ export default function SurvivedScreen() {
     // Apply rewards
     addXp(XP_REWARD);
     addSecurityTokens(TOKEN_REWARD);
-    incrementStreak();
     recordSurvive();
-    if (scenarioId) completeScenario(scenarioId);
+    if (scenarioId) {
+      completeScenarioPlayer(scenarioId);
+      completeScenarioGame(scenarioId, "survived", []);
+    }
 
     // Fade in
     Animated.timing(fadeAnim, {
@@ -75,7 +87,6 @@ export default function SurvivedScreen() {
   }, []);
 
   const formattedSaved = savedNum.toLocaleString("en-US");
-  // streak was already incremented, display the new value
   const displayStreak = streak;
 
   return (

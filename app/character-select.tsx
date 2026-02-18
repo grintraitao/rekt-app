@@ -11,6 +11,7 @@ import {
   usePlayerStore,
   type PlayerClass,
 } from "../src/store/playerStore";
+import { usePortfolioStore } from "../src/store/portfolioStore";
 
 /* ── Class data ─────────────────────────────────────────────────────────────── */
 
@@ -74,10 +75,14 @@ export default function CharacterSelectScreen() {
   const selectedClass = usePlayerStore((s) => s.playerClass);
   const setClass = usePlayerStore((s) => s.selectClass);
   const setOnboarded = usePlayerStore((s) => s.completeOnboarding);
+  const initializePortfolio = usePortfolioStore((s) => s.initializePortfolio);
 
   const selectedName = classes.find((c) => c.id === (selectedClass ?? "ape"))?.name ?? "";
 
   const handleConfirm = () => {
+    if (selectedClass) {
+      initializePortfolio(selectedClass);
+    }
     setOnboarded();
     router.replace("/daily-reward");
   };

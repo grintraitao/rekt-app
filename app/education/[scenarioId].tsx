@@ -7,6 +7,7 @@ import {
   spacing,
   borderRadius,
 } from "../../src/theme";
+import { usePlayerStore } from "../../src/store/playerStore";
 
 // ── Scenario data registry (same as scenario screen) ──────────────────────
 import fakeSupport from "../../src/data/scenarios/ch1-fake-support-dm.json";
@@ -28,6 +29,8 @@ function difficultyStars(level: number): string {
 
 export default function EducationPostMortem() {
   const router = useRouter();
+  const updateStat = usePlayerStore((s) => s.updateStat);
+  const addXP = usePlayerStore((s) => s.addXP);
   const {
     scenarioId = "",
     outcomeType = "",
@@ -62,10 +65,10 @@ export default function EducationPostMortem() {
     );
   }
 
-  const difficulty = (edu as any).difficulty ?? scenario.difficulty ?? 1;
-  const category = (edu as any).category ?? scenario.type ?? "Unknown";
-  const steps: string[] = (edu as any).steps ?? [];
-  const irlTips: string[] = (edu as any).irlTips ?? [];
+  const difficulty = scenario.difficulty ?? 1;
+  const category = edu.category ?? scenario.category ?? "Unknown";
+  const steps: string[] = edu.howItWorked?.map((s: { text: string }) => s.text) ?? [];
+  const irlTips: string[] = edu.irlProtection ?? [];
 
   return (
     <View style={styles.container}>
@@ -83,7 +86,7 @@ export default function EducationPostMortem() {
       >
         {/* ── Header ──────────────────────────────────────────────────── */}
         <Text style={styles.headerLabel}>ATTACK ANALYSIS</Text>
-        <Text style={styles.headerTitle}>{edu.title}</Text>
+        <Text style={styles.headerTitle}>{edu.attackName}</Text>
         <Text style={styles.headerSub}>
           {difficultyStars(difficulty)} · {category}
         </Text>
@@ -145,7 +148,7 @@ export default function EducationPostMortem() {
                   params: {
                     type: outcomeType,
                     amount,
-                    detail: detail || edu.title,
+                    detail: detail || edu.attackName,
                     stat: isRekt ? "73% fell for this" : "Top 27% safest",
                   },
                 } as never);
@@ -156,7 +159,11 @@ export default function EducationPostMortem() {
           ) : null}
           <Pressable
             style={styles.continueBtn}
-            onPress={() => router.replace("/(tabs)" as never)}
+            onPress={() => {
+              updateStat("knowledge", 5);
+              addXP(30);
+              router.replace("/(tabs)" as never);
+            }}
           >
             <Text style={styles.continueBtnText}>Back to Wallet →</Text>
           </Pressable>

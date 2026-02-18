@@ -20,6 +20,7 @@ import {
 } from "../../src/theme";
 import { usePlayerStore } from "../../src/store/playerStore";
 import { usePortfolioStore } from "../../src/store/portfolioStore";
+import { useGameStore } from "../../src/store/gameStore";
 import { useScenarioStore } from "../../src/store/scenarioStore";
 import { useGearStore } from "../../src/store/gearStore";
 
@@ -142,19 +143,10 @@ export default function MoreScreen() {
   }
 
   function resetAllStores() {
-    // Reset player store
     usePlayerStore.getState().resetAll();
-
-    // Reset portfolio store
-    usePortfolioStore.setState({
-      hp: 100,
-      streak: 0,
-    });
-
-    // Reset scenario store
-    useScenarioStore.getState().reset();
-
-    // Reset gear store
+    usePortfolioStore.getState().resetPortfolio();
+    useGameStore.getState().resetGame();
+    useScenarioStore.getState().resetScenario();
     useGearStore.setState({
       equippedIds: ["paper-wallet", "bookmark-bar", "2fa-shield"],
     });

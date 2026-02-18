@@ -16,45 +16,26 @@ import {
   borderRadius,
 } from "../../src/theme";
 import { usePlayerStore, getLevel } from "../../src/store/playerStore";
+import { useGameStore, type ChapterInfo } from "../../src/store/gameStore";
 
-/* ── Chapter data ─────────────────────────────────────────────────────────── */
+/* ── Chapter helpers ──────────────────────────────────────────────────────── */
 
 type ChapterStatus = "completed" | "current" | "locked";
 
-type Chapter = {
-  num: number;
-  title: string;
-  icon: string;
-  /** Scenarios in this chapter */
-  totalScenarios: number;
-  /** Level required to unlock (0 = always unlocked) */
-  unlockLevel: number;
-};
-
-const CHAPTERS: Chapter[] = [
-  { num: 1, title: "Genesis Block", icon: "🏠", totalScenarios: 5, unlockLevel: 0 },
-  { num: 2, title: "DEX District", icon: "🏦", totalScenarios: 5, unlockLevel: 5 },
-  { num: 3, title: "NFT Bazaar", icon: "🎨", totalScenarios: 5, unlockLevel: 15 },
-  { num: 4, title: "Bridge City", icon: "🌉", totalScenarios: 5, unlockLevel: 20 },
-  { num: 5, title: "The Dark Pool", icon: "💀", totalScenarios: 5, unlockLevel: 25 },
-];
-
-/** Map scenario IDs to chapter numbers (prefix-based) */
 function countCompletedInChapter(
-  chapter: number,
+  chapter: ChapterInfo,
   completedScenarios: string[],
 ): number {
-  const prefix = `ch${chapter}-`;
-  return completedScenarios.filter((id) => id.startsWith(prefix)).length;
+  return chapter.scenarioIds.filter((id) => completedScenarios.includes(id)).length;
 }
 
 function getChapterStatus(
-  chapter: Chapter,
+  chapter: ChapterInfo,
   playerLevel: number,
   completedInChapter: number,
 ): ChapterStatus {
-  if (completedInChapter >= chapter.totalScenarios) return "completed";
-  if (playerLevel >= chapter.unlockLevel) return "current";
+  if (completedInChapter >= chapter.scenarioIds.length) return "completed";
+  if (playerLevel >= chapter.requiredLevel) return "current";
   return "locked";
 }
 
@@ -98,7 +79,7 @@ function ChapterCard({
   completed,
   onPress,
 }: {
-  chapter: Chapter;
+  chapter: ChapterInfo;
   status: ChapterStatus;
   completed: number;
   onPress: () => void;
@@ -106,14 +87,15 @@ function ChapterCard({
   const isLocked = status === "locked";
   const isCurrent = status === "current";
   const isCompleted = status === "completed";
+  const total = chapter.scenarioIds.length;
 
   let statusText: string;
   if (isCompleted) {
-    statusText = `✅ Complete · ${chapter.totalScenarios}/${chapter.totalScenarios}`;
+    statusText = `✅ Complete · ${total}/${total}`;
   } else if (isCurrent) {
-    statusText = `In progress · ${completed}/${chapter.totalScenarios}`;
+    statusText = `In progress · ${completed}/${total}`;
   } else {
-    statusText = `🔒 Level ${chapter.unlockLevel}`;
+    statusText = `🔒 Level ${chapter.requiredLevel}`;
   }
 
   return (
@@ -131,7 +113,7 @@ function ChapterCard({
           (isCurrent || isCompleted) && styles.chapterIconActive,
         ]}
       >
-        <Text style={styles.chapterEmoji}>{chapter.icon}</Text>
+        <Text style={styles.chapterEmoji}>{chapter.emoji}</Text>
       </View>
 
       <View style={styles.chapterInfo}>
@@ -142,7 +124,7 @@ function ChapterCard({
             isLocked && styles.chapterTitleLocked,
           ]}
         >
-          Ch.{chapter.num}: {chapter.title}
+          Ch.{chapter.id}: {chapter.name}
         </Text>
         <Text style={styles.chapterStatus}>{statusText}</Text>
       </View>
@@ -159,34 +141,29 @@ function ChapterCard({
 export default function MapScreen() {
   const router = useRouter();
   const xp = usePlayerStore((s) => s.xp);
-  const completedScenarios = usePlayerStore((s) => s.completedScenarios);
   const playerLevel = getLevel(xp);
+  const chapters = useGameStore((s) => s.chapters);
+  const completedScenarios = useGameStore((s) => s.completedScenarios);
   const { show: showToast, Toast } = useToast();
 
   // Find highest unlocked (non-locked) chapter for subtitle
   let currentChapterNum = 1;
-  for (const ch of CHAPTERS) {
-    const completed = countCompletedInChapter(ch.num, completedScenarios);
+  for (const ch of chapters) {
+    const completed = countCompletedInChapter(ch, completedScenarios);
     const status = getChapterStatus(ch, playerLevel, completed);
-    if (status !== "locked") currentChapterNum = ch.num;
+    if (status !== "locked") currentChapterNum = ch.id;
   }
 
-  // Map chapter numbers to their first scenario type
-  const CHAPTER_SCENARIO: Record<number, string> = {
-    1: "phishing",
-    2: "approval-scam",
-    3: "honeypot",
-    4: "fake-airdrop",
-    5: "impersonation",
-  };
-
-  function handleChapterPress(chapter: Chapter, status: ChapterStatus) {
+  function handleChapterPress(chapter: ChapterInfo, status: ChapterStatus) {
     if (status === "locked") {
-      showToast(`Reach Level ${chapter.unlockLevel} to unlock`);
+      showToast(`Reach Level ${chapter.requiredLevel} to unlock`);
       return;
     }
-    const scenarioType = CHAPTER_SCENARIO[chapter.num] ?? "phishing";
-    router.push(`/scenario/${scenarioType}` as never);
+    // Navigate to the first uncompleted scenario in this chapter
+    const nextScenario = chapter.scenarioIds.find(
+      (id) => !completedScenarios.includes(id),
+    ) ?? chapter.scenarioIds[0];
+    router.push(`/scenario/${nextScenario}` as never);
   }
 
   return (
@@ -195,7 +172,7 @@ export default function MapScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>The Chain</Text>
         <Text style={styles.headerSub}>
-          Chapter {currentChapterNum} of {CHAPTERS.length}
+          Chapter {currentChapterNum} of {chapters.length}
         </Text>
       </View>
 
@@ -204,19 +181,19 @@ export default function MapScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {CHAPTERS.map((ch, i) => {
-          const completed = countCompletedInChapter(ch.num, completedScenarios);
+        {chapters.map((ch, i) => {
+          const completed = countCompletedInChapter(ch, completedScenarios);
           const status = getChapterStatus(ch, playerLevel, completed);
           const nextLocked =
-            i < CHAPTERS.length - 1 &&
+            i < chapters.length - 1 &&
             getChapterStatus(
-              CHAPTERS[i + 1],
+              chapters[i + 1],
               playerLevel,
-              countCompletedInChapter(CHAPTERS[i + 1].num, completedScenarios),
+              countCompletedInChapter(chapters[i + 1], completedScenarios),
             ) === "locked";
 
           return (
-            <View key={ch.num}>
+            <View key={ch.id}>
               <ChapterCard
                 chapter={ch}
                 status={status}
@@ -224,7 +201,7 @@ export default function MapScreen() {
                 onPress={() => handleChapterPress(ch, status)}
               />
               {/* Connector line */}
-              {i < CHAPTERS.length - 1 && (
+              {i < chapters.length - 1 && (
                 <View style={styles.connectorWrap}>
                   <View
                     style={[

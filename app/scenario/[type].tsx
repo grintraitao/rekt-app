@@ -16,23 +16,33 @@ import {
 } from "../../src/theme";
 import {
   useScenarioStore,
-  type ChatMessage,
+  registerScenario,
+  type ScenarioMessage,
   type ScenarioChoice,
+  type ScamCategory,
 } from "../../src/store/scenarioStore";
+import { usePlayerStore } from "../../src/store/playerStore";
+import { usePortfolioStore } from "../../src/store/portfolioStore";
+import { GearEngine } from "../../src/engine/GearEngine";
+import { ClassAbilityEngine } from "../../src/engine/ClassAbilityEngine";
 import ApprovalPopup from "../../src/components/ApprovalPopup";
 
 // ── Scenario data registry ────────────────────────────────────────────────
-// Maps scam type → scenario data. For now just one; more added per chapter.
 import fakeSupport from "../../src/data/scenarios/ch1-fake-support-dm.json";
 import approvalScam from "../../src/data/scenarios/ch1-approval-scam.json";
 
-const SCENARIO_MAP: Record<string, typeof fakeSupport> = {
-  phishing: fakeSupport,
-  "fake-airdrop": fakeSupport, // placeholder — reuse until real data exists
-  impersonation: fakeSupport,
-  "fake-support-dm": fakeSupport,
-  honeypot: approvalScam as unknown as typeof fakeSupport, // placeholder
-  "approval-scam": approvalScam as unknown as typeof fakeSupport,
+// Register scenarios so scenarioStore.loadScenario(id) can find them
+registerScenario(fakeSupport as any);
+registerScenario(approvalScam as any);
+
+// Maps route param → scenario ID for backward compatibility
+const SCENARIO_ID_MAP: Record<string, string> = {
+  phishing: "ch1-fake-support-dm",
+  "fake-airdrop": "ch1-fake-support-dm",
+  impersonation: "ch1-fake-support-dm",
+  "fake-support-dm": "ch1-fake-support-dm",
+  honeypot: "ch1-approval-scam",
+  "approval-scam": "ch1-approval-scam",
 };
 
 /* ── Chat bubble ───────────────────────────────────────────────────────────── */
@@ -41,10 +51,18 @@ function ChatBubble({
   msg,
   npcAvatar,
 }: {
-  msg: ChatMessage;
+  msg: ScenarioMessage;
   npcAvatar: string;
 }) {
   if (msg.sender === "system") {
+    // Hint messages from Sensei use hint styling
+    if (msg.senderName === "Sensei") {
+      return (
+        <View style={styles.hintBubble}>
+          <Text style={styles.hintText}>{msg.text}</Text>
+        </View>
+      );
+    }
     return (
       <View style={styles.systemBubble}>
         <Text style={styles.systemText}>{msg.text}</Text>
@@ -52,10 +70,10 @@ function ChatBubble({
     );
   }
 
-  if (msg.sender === "hint") {
+  if (msg.sender === "player") {
     return (
-      <View style={styles.hintBubble}>
-        <Text style={styles.hintText}>{msg.text}</Text>
+      <View style={styles.systemBubble}>
+        <Text style={styles.systemText}>{msg.text}</Text>
       </View>
     );
   }
@@ -110,27 +128,80 @@ export default function ScamScenarioScreen() {
   const { type } = useLocalSearchParams<{ type: string }>();
   const scrollRef = useRef<ScrollView>(null);
 
-  const {
-    scenario,
-    currentStepId,
-    chatHistory,
-    showChoices,
-    outcome,
-    hintsUsed,
-    maxHints,
-    loadScenario,
-    selectChoice,
-    reset,
-  } = useScenarioStore();
+  const scenario = useScenarioStore((s) => s.activeScenario);
+  const currentNodeId = useScenarioStore((s) => s.currentNodeId);
+  const visibleMessages = useScenarioStore((s) => s.visibleMessages);
+  const choicesVisible = useScenarioStore((s) => s.choicesVisible);
+  const outcome = useScenarioStore((s) => s.outcome);
+  const senseiUsesLeft = useScenarioStore((s) => s.senseiUsesLeft);
+  const loadScenario = useScenarioStore((s) => s.loadScenario);
+  const startScenario = useScenarioStore((s) => s.startScenario);
+  const selectChoice = useScenarioStore((s) => s.selectChoice);
+  const resetScenario = useScenarioStore((s) => s.resetScenario);
+
+  const playerClass = usePlayerStore((s) => s.playerClass);
+  const equippedGear = usePlayerStore((s) => s.equippedGear);
+  const abilityUsesRemaining = usePlayerStore((s) => s.abilityUsesRemaining);
+  const useAbilityAction = usePlayerStore((s) => s.useAbility);
+  const totalValue = usePortfolioStore((s) => s.totalValue);
+  const [autoDetected, setAutoDetected] = useState(false);
+
+  const MAX_HINTS = 2;
 
   // Load scenario on mount
   useEffect(() => {
-    const data = SCENARIO_MAP[type ?? ""];
-    if (data) {
-      loadScenario(data as any);
+    // Resolve route param to scenario ID
+    const scenarioId = SCENARIO_ID_MAP[type ?? ""] ?? type ?? "";
+    if (scenarioId) {
+      loadScenario(scenarioId);
+      startScenario();
     }
-    return () => reset();
+    return () => resetScenario();
   }, [type]);
+
+  // Check gear auto-detect and class abilities after scenario loads
+  useEffect(() => {
+    if (!scenario || autoDetected) return;
+
+    const category = scenario.category as ScamCategory;
+
+    // Check gear auto-detect
+    const gearResult = GearEngine.rollAutoDetect(equippedGear, category);
+    if (gearResult.detected) {
+      setAutoDetected(true);
+      return;
+    }
+
+    // Check class ability
+    if (playerClass && abilityUsesRemaining > 0) {
+      const abilityResult = ClassAbilityEngine.checkAbility(
+        playerClass,
+        category,
+        abilityUsesRemaining,
+        scenario,
+      );
+      if (abilityResult.abilityTriggered) {
+        useAbilityAction();
+        setAutoDetected(true);
+      }
+    }
+  }, [scenario?.id]);
+
+  // If auto-detected, navigate to survived after a delay
+  useEffect(() => {
+    if (!autoDetected || !scenario) return;
+    const timer = setTimeout(() => {
+      router.replace({
+        pathname: "/outcome/survived",
+        params: {
+          amountSaved: String(Math.round(totalValue * 0.1)),
+          blockedAttack: scenario.education?.attackName ?? "Unknown Scam",
+          scenarioId: scenario.id ?? "",
+        },
+      } as never);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [autoDetected]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -138,18 +209,20 @@ export default function ScamScenarioScreen() {
       scrollRef.current?.scrollToEnd({ animated: true });
     }, 100);
     return () => clearTimeout(timer);
-  }, [chatHistory.length, showChoices]);
+  }, [visibleMessages.length, choicesVisible]);
 
   // Navigate on outcome — pass scenario context to outcome screens
   useEffect(() => {
     if (!outcome) return;
+    const lossAmount = Math.round(totalValue * 0.3);
+    const savedAmount = Math.round(totalValue * 0.1);
     const timer = setTimeout(() => {
       if (outcome === "rekt") {
         router.replace({
           pathname: "/outcome/rekt",
           params: {
-            amountLost: "34201",
-            attackType: scenario?.education?.title ?? "Unknown Scam",
+            amountLost: String(lossAmount),
+            attackType: scenario?.education?.attackName ?? "Unknown Scam",
             scenarioId: scenario?.id ?? "",
           },
         } as never);
@@ -157,8 +230,8 @@ export default function ScamScenarioScreen() {
         router.replace({
           pathname: "/outcome/survived",
           params: {
-            amountSaved: "47832",
-            blockedAttack: scenario?.education?.title ?? "Unknown Scam",
+            amountSaved: String(savedAmount),
+            blockedAttack: scenario?.education?.attackName ?? "Unknown Scam",
             scenarioId: scenario?.id ?? "",
           },
         } as never);
@@ -167,20 +240,37 @@ export default function ScamScenarioScreen() {
     return () => clearTimeout(timer);
   }, [outcome]);
 
-  // Current step's choices & approval data
-  const currentStep = scenario?.steps.find((s) => s.id === currentStepId);
-  const choices = currentStep?.choices ?? [];
-  const approvalData = currentStep?.approval;
+  // Current node's choices & approval data
+  const currentNode = scenario?.nodes.find((n) => n.id === currentNodeId);
+  const choices = currentNode?.choices ?? [];
+  const approvalData = (currentNode as any)?.approval;
   const [showApproval, setShowApproval] = useState(false);
 
-  // Show approval popup when step has approval data
+  // Show approval popup when node has approval data
   useEffect(() => {
-    if (approvalData && showChoices && !outcome) {
+    if (approvalData && choicesVisible && !outcome) {
       const timer = setTimeout(() => setShowApproval(true), 400);
       return () => clearTimeout(timer);
     }
     setShowApproval(false);
-  }, [currentStepId, approvalData, showChoices, outcome]);
+  }, [currentNodeId, approvalData, choicesVisible, outcome]);
+
+  // Show auto-detect screen
+  if (autoDetected && scenario) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.center, { gap: 12 }]}>
+          <Text style={{ fontSize: 48 }}>🛡️</Text>
+          <Text style={[styles.scenarioTitle, { color: colors.green, fontSize: 18 }]}>
+            SCAM AUTO-DETECTED!
+          </Text>
+          <Text style={{ color: colors.textDim, textAlign: "center", fontSize: 13, paddingHorizontal: 32 }}>
+            Your gear or class ability detected this scam before it could harm you.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   // Fallback if no scenario data found
   if (!scenario) {
@@ -206,7 +296,7 @@ export default function ScamScenarioScreen() {
     <View style={styles.container}>
       {/* ── Top bar ──────────────────────────────────────────────────── */}
       <View style={styles.topBar}>
-        <Pressable onPress={() => { reset(); router.back(); }}>
+        <Pressable onPress={() => { resetScenario(); router.back(); }}>
           <Text style={styles.backText}>← Notifications</Text>
         </Pressable>
       </View>
@@ -225,7 +315,7 @@ export default function ScamScenarioScreen() {
         contentContainerStyle={styles.chatContent}
         showsVerticalScrollIndicator={false}
       >
-        {chatHistory.map((msg) => (
+        {visibleMessages.map((msg: ScenarioMessage) => (
           <ChatBubble
             key={msg.id}
             msg={msg}
@@ -257,16 +347,16 @@ export default function ScamScenarioScreen() {
       </ScrollView>
 
       {/* ── Choices (hidden when approval popup is active) ─────────── */}
-      {showChoices && !outcome && !approvalData && (
+      {choicesVisible && !outcome && !approvalData && (
         <View style={styles.choicesContainer}>
           <Text style={styles.choicesLabel}>YOUR RESPONSE:</Text>
-          {choices.map((c) => (
+          {choices.map((c: ScenarioChoice) => (
             <ChoiceButton
               key={c.id}
               choice={c}
-              hintsUsed={hintsUsed}
-              maxHints={maxHints}
-              onPress={() => selectChoice(c)}
+              hintsUsed={MAX_HINTS - senseiUsesLeft}
+              maxHints={MAX_HINTS}
+              onPress={() => selectChoice(c.id)}
             />
           ))}
         </View>
@@ -281,17 +371,17 @@ export default function ScamScenarioScreen() {
           onApprove={() => {
             setShowApproval(false);
             if (approvalData.type === "scam") {
-              selectChoice({ id: "approve-scam", text: "Approve ✓", outcome: "rekt" });
+              selectChoice("approve-scam");
             } else {
               // Safe approval — proceed back to wallet
-              reset();
+              resetScenario();
               router.replace("/(tabs)" as never);
             }
           }}
           onReject={() => {
             setShowApproval(false);
             if (approvalData.type === "scam") {
-              selectChoice({ id: "reject-scam", text: "Reject", outcome: "survived" });
+              selectChoice("reject-scam");
             }
             // Safe rejection — stay on current screen, go back to previous step
             // (dismiss popup, user can navigate back)

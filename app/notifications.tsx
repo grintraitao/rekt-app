@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -8,13 +9,47 @@ import {
   borderRadius,
 } from "../src/theme";
 import { useNotificationStore } from "../src/store/notificationStore";
+import { useGameStore } from "../src/store/gameStore";
+import { ScamDeliveryEngine } from "../src/engine/ScamDeliveryEngine";
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notifications, markRead, markAllRead, unreadCount } =
+  const { notifications: staticNotifs, markRead, markAllRead, unreadCount } =
     useNotificationStore();
+  const currentChapter = useGameStore((s) => s.currentChapter);
+  const completedScenarios = useGameStore((s) => s.completedScenarios);
+  const gameDay = useGameStore((s) => s.gameDay);
 
-  const hasUnread = unreadCount() > 0;
+  // Generate dynamic notifications from ScamDeliveryEngine
+  const dynamicNotifs = useMemo(() => {
+    const delivered = ScamDeliveryEngine.generateNotifications(
+      currentChapter,
+      completedScenarios,
+      gameDay,
+    );
+    return delivered.map((d) => ({
+      id: d.id,
+      icon: d.icon,
+      iconColor: d.type === "scam" ? "#ff8c00" : "#00ff88",
+      iconBg: d.iconBg,
+      title: d.title,
+      subtitle: d.subtitle,
+      time: "now",
+      read: d.isRead,
+      scamType: d.linkedScenarioId ? ("phishing" as const) : undefined,
+    }));
+  }, [currentChapter, completedScenarios.length, gameDay]);
+
+  // Track read state for dynamic notifs locally
+  const [readDynamic, setReadDynamic] = useState<Set<string>>(new Set());
+
+  // Merge dynamic + static notifications
+  const notifications = useMemo(() => [
+    ...dynamicNotifs.map((n) => ({ ...n, read: readDynamic.has(n.id) || n.read })),
+    ...staticNotifs,
+  ], [dynamicNotifs, staticNotifs, readDynamic]);
+
+  const hasUnread = notifications.some((n) => !n.read);
 
   return (
     <View style={styles.container}>
@@ -43,11 +78,10 @@ export default function NotificationsScreen() {
           const isScam = !!notif.scamType;
 
           const handlePress = () => {
+            markRead(notif.id);
+            setReadDynamic((prev) => new Set(prev).add(notif.id));
             if (isScam) {
-              markRead(notif.id);
               router.push(`/scenario/${notif.scamType}` as never);
-            } else {
-              markRead(notif.id);
             }
           };
 
