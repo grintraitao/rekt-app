@@ -1,78 +1,250 @@
-import { StyleSheet, Text, View, ScrollView } from "react-native";
-import { colors, spacing, fontSize, fonts, borderRadius, card } from "../../src/theme";
+import { useRef } from "react";
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
+import {
+  colors,
+  fonts,
+  fontSize,
+  spacing,
+  borderRadius,
+} from "../../src/theme";
+import { usePlayerStore, getLevel } from "../../src/store/playerStore";
 
-const chapters = [
-  { num: 1, title: "The Honeypot", level: "Lvl 1", unlocked: true, icon: "🍯" },
-  { num: 2, title: "The Rug Pull", level: "Lvl 5", unlocked: false, icon: "🧶" },
-  { num: 3, title: "The Phishing Net", level: "Lvl 10", unlocked: false, icon: "🎣" },
-  { num: 4, title: "The Insider", level: "Lvl 18", unlocked: false, icon: "🕵️" },
-  { num: 5, title: "The Dark Pool", level: "Lvl 25", unlocked: false, icon: "💀" },
+/* ── Chapter data ─────────────────────────────────────────────────────────── */
+
+type ChapterStatus = "completed" | "current" | "locked";
+
+type Chapter = {
+  num: number;
+  title: string;
+  icon: string;
+  /** Scenarios in this chapter */
+  totalScenarios: number;
+  /** Level required to unlock (0 = always unlocked) */
+  unlockLevel: number;
+};
+
+const CHAPTERS: Chapter[] = [
+  { num: 1, title: "Genesis Block", icon: "🏠", totalScenarios: 5, unlockLevel: 0 },
+  { num: 2, title: "DEX District", icon: "🏦", totalScenarios: 5, unlockLevel: 5 },
+  { num: 3, title: "NFT Bazaar", icon: "🎨", totalScenarios: 5, unlockLevel: 15 },
+  { num: 4, title: "Bridge City", icon: "🌉", totalScenarios: 5, unlockLevel: 20 },
+  { num: 5, title: "The Dark Pool", icon: "💀", totalScenarios: 5, unlockLevel: 25 },
 ];
 
-export default function MapScreen() {
+/** Map scenario IDs to chapter numbers (prefix-based) */
+function countCompletedInChapter(
+  chapter: number,
+  completedScenarios: string[],
+): number {
+  const prefix = `ch${chapter}-`;
+  return completedScenarios.filter((id) => id.startsWith(prefix)).length;
+}
+
+function getChapterStatus(
+  chapter: Chapter,
+  playerLevel: number,
+  completedInChapter: number,
+): ChapterStatus {
+  if (completedInChapter >= chapter.totalScenarios) return "completed";
+  if (playerLevel >= chapter.unlockLevel) return "current";
+  return "locked";
+}
+
+/* ── Toast component ──────────────────────────────────────────────────────── */
+
+function useToast() {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const messageRef = useRef("");
+
+  const show = (msg: string) => {
+    messageRef.current = msg;
+    Animated.sequence([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const Toast = () => (
+    <Animated.View style={[styles.toast, { opacity }]} pointerEvents="none">
+      <Text style={styles.toastText}>{messageRef.current}</Text>
+    </Animated.View>
+  );
+
+  return { show, Toast };
+}
+
+/* ── Chapter card ─────────────────────────────────────────────────────────── */
+
+function ChapterCard({
+  chapter,
+  status,
+  completed,
+  onPress,
+}: {
+  chapter: Chapter;
+  status: ChapterStatus;
+  completed: number;
+  onPress: () => void;
+}) {
+  const isLocked = status === "locked";
+  const isCurrent = status === "current";
+  const isCompleted = status === "completed";
+
+  let statusText: string;
+  if (isCompleted) {
+    statusText = `✅ Complete · ${chapter.totalScenarios}/${chapter.totalScenarios}`;
+  } else if (isCurrent) {
+    statusText = `In progress · ${completed}/${chapter.totalScenarios}`;
+  } else {
+    statusText = `🔒 Level ${chapter.unlockLevel}`;
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🗺️ World Map</Text>
-        <Text style={styles.headerSub}>5 Chapters · 30+ Scenarios</Text>
+    <Pressable
+      style={[
+        styles.chapterCard,
+        isCurrent && styles.chapterCurrent,
+        isLocked && styles.chapterLocked,
+      ]}
+      onPress={onPress}
+    >
+      <View
+        style={[
+          styles.chapterIcon,
+          (isCurrent || isCompleted) && styles.chapterIconActive,
+        ]}
+      >
+        <Text style={styles.chapterEmoji}>{chapter.icon}</Text>
       </View>
 
-      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-        {chapters.map((ch, i) => (
-          <View key={ch.num}>
-            <View
-              style={[
-                styles.chapterCard,
-                !ch.unlocked && styles.chapterLocked,
-              ]}
-            >
-              <View style={styles.chapterIcon}>
-                <Text style={styles.chapterEmoji}>{ch.icon}</Text>
-              </View>
-              <View style={styles.chapterInfo}>
-                <Text
-                  style={[
-                    styles.chapterTitle,
-                    !ch.unlocked && styles.textLocked,
-                  ]}
-                >
-                  Ch.{ch.num}: {ch.title}
-                </Text>
-                <Text style={styles.chapterLevel}>
-                  {ch.unlocked ? "🔓 " : "🔒 "}
-                  {ch.level}
-                </Text>
-              </View>
-              {ch.unlocked && (
-                <Text style={styles.chapterArrow}>→</Text>
+      <View style={styles.chapterInfo}>
+        <Text
+          style={[
+            styles.chapterTitle,
+            isCurrent && styles.chapterTitleCurrent,
+            isLocked && styles.chapterTitleLocked,
+          ]}
+        >
+          Ch.{chapter.num}: {chapter.title}
+        </Text>
+        <Text style={styles.chapterStatus}>{statusText}</Text>
+      </View>
+
+      {(isCurrent || isCompleted) && (
+        <Text style={styles.chapterArrow}>→</Text>
+      )}
+    </Pressable>
+  );
+}
+
+/* ── Screen ───────────────────────────────────────────────────────────────── */
+
+export default function MapScreen() {
+  const router = useRouter();
+  const xp = usePlayerStore((s) => s.xp);
+  const completedScenarios = usePlayerStore((s) => s.completedScenarios);
+  const playerLevel = getLevel(xp);
+  const { show: showToast, Toast } = useToast();
+
+  // Find highest unlocked (non-locked) chapter for subtitle
+  let currentChapterNum = 1;
+  for (const ch of CHAPTERS) {
+    const completed = countCompletedInChapter(ch.num, completedScenarios);
+    const status = getChapterStatus(ch, playerLevel, completed);
+    if (status !== "locked") currentChapterNum = ch.num;
+  }
+
+  function handleChapterPress(chapter: Chapter, status: ChapterStatus) {
+    if (status === "locked") {
+      showToast(`Reach Level ${chapter.unlockLevel} to unlock`);
+    }
+    // TODO: completed → chapter summary; current → scenario list
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* ── Header ────────────────────────────────────────── */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>The Chain</Text>
+        <Text style={styles.headerSub}>
+          Chapter {currentChapterNum} of {CHAPTERS.length}
+        </Text>
+      </View>
+
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {CHAPTERS.map((ch, i) => {
+          const completed = countCompletedInChapter(ch.num, completedScenarios);
+          const status = getChapterStatus(ch, playerLevel, completed);
+          const nextLocked =
+            i < CHAPTERS.length - 1 &&
+            getChapterStatus(
+              CHAPTERS[i + 1],
+              playerLevel,
+              countCompletedInChapter(CHAPTERS[i + 1].num, completedScenarios),
+            ) === "locked";
+
+          return (
+            <View key={ch.num}>
+              <ChapterCard
+                chapter={ch}
+                status={status}
+                completed={completed}
+                onPress={() => handleChapterPress(ch, status)}
+              />
+              {/* Connector line */}
+              {i < CHAPTERS.length - 1 && (
+                <View style={styles.connectorWrap}>
+                  <View
+                    style={[
+                      styles.connectorLine,
+                      nextLocked && styles.connectorDim,
+                    ]}
+                  />
+                </View>
               )}
             </View>
-
-            {/* Connector line between chapters */}
-            {i < chapters.length - 1 && (
-              <View style={styles.connector}>
-                <View
-                  style={[
-                    styles.connectorLine,
-                    !chapters[i + 1].unlocked && styles.connectorDim,
-                  ]}
-                />
-              </View>
-            )}
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
+
+      {/* Toast overlay */}
+      <Toast />
     </View>
   );
 }
+
+/* ── Styles ───────────────────────────────────────────────────────────────── */
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
   },
+
+  /* Header */
   header: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
@@ -81,41 +253,60 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: fonts.mono,
     fontSize: fontSize.xl,
-    fontWeight: "bold",
-    color: colors.textPrimary,
+    fontWeight: "700",
+    color: colors.text,
   },
   headerSub: {
     fontFamily: fonts.mono,
     fontSize: fontSize.sm,
-    color: colors.textMuted,
+    color: colors.textDim,
     marginTop: spacing.xs,
   },
+
+  /* Scroll */
   scrollArea: {
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.md,
+    padding: spacing.lg,
+    paddingBottom: spacing["4xl"],
   },
+
+  /* Chapter card */
   chapterCard: {
-    ...card,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+  },
+  chapterCurrent: {
+    borderColor: colors.green,
   },
   chapterLocked: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
+
+  /* Chapter icon */
   chapterIcon: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surface2,
     alignItems: "center",
     justifyContent: "center",
   },
-  chapterEmoji: {
-    fontSize: 22,
+  chapterIconActive: {
+    backgroundColor: colors.greenDim,
   },
+  chapterEmoji: {
+    fontSize: 16,
+  },
+
+  /* Chapter info */
   chapterInfo: {
     flex: 1,
   },
@@ -123,15 +314,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
     fontSize: fontSize.md,
     fontWeight: "600",
-    color: colors.textPrimary,
+    color: colors.text,
   },
-  textLocked: {
-    color: colors.textMuted,
+  chapterTitleCurrent: {
+    color: colors.green,
   },
-  chapterLevel: {
+  chapterTitleLocked: {
+    color: colors.textDim,
+  },
+  chapterStatus: {
     fontFamily: fonts.mono,
     fontSize: fontSize.xs,
-    color: colors.textMuted,
+    color: colors.textDim,
     marginTop: 2,
   },
   chapterArrow: {
@@ -139,19 +333,40 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     color: colors.green,
   },
-  connector: {
+
+  /* Connector */
+  connectorWrap: {
     alignItems: "center",
-    height: 24,
+    height: 20,
     justifyContent: "center",
   },
   connectorLine: {
     width: 2,
-    height: 24,
-    backgroundColor: colors.green,
+    height: 20,
+    backgroundColor: colors.border,
     borderRadius: 1,
   },
   connectorDim: {
-    backgroundColor: colors.border,
     opacity: 0.3,
+  },
+
+  /* Toast */
+  toast: {
+    position: "absolute",
+    bottom: 80,
+    left: spacing.xl,
+    right: spacing.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: "center",
+  },
+  toastText: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.md,
+    color: colors.text,
   },
 });
