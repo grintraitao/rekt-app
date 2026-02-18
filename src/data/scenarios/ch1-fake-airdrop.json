@@ -1,0 +1,222 @@
+{
+  "id": "ch1-fake-airdrop",
+  "chapter": 1,
+  "scenarioIndex": 2,
+  "title": "Free Token Airdrop",
+  "subtitle": "Claim 10,000 FREE tokens",
+  "icon": "🎁",
+  "difficulty": 2,
+  "category": "honeypot",
+  "deliveryChannel": "activity-feed",
+  "npcAvatar": "🪂",
+  "npcName": "FREE-TOKEN Airdrop",
+  "isBoss": false,
+
+  "nodes": [
+    {
+      "id": "opening",
+      "messages": [
+        {
+          "id": "sys-activity",
+          "sender": "system",
+          "text": "📊 New Activity in Your Wallet"
+        },
+        {
+          "id": "sys-token-received",
+          "sender": "system",
+          "text": "🪂 You received 10,000 FREE-TOKEN\nFrom: Airdrop Contract (0x8b3...f21)\nValue: ~$4,200 USD"
+        },
+        {
+          "id": "npc-claim",
+          "sender": "npc",
+          "senderName": "FREE-TOKEN",
+          "senderAvatar": "🪂",
+          "text": "Congratulations! You've been selected for the FREE-TOKEN community airdrop! Tap 'Claim' to activate your tokens and add them to your tradeable balance.",
+          "delay": 1000
+        },
+        {
+          "id": "sys-note",
+          "sender": "system",
+          "text": "💡 The tokens appeared in your wallet automatically. A button says 'Claim & Activate' to make them tradeable."
+        }
+      ],
+      "choices": [
+        {
+          "id": "claim-tokens",
+          "text": "Claim & Activate my tokens",
+          "emoji": "🎁",
+          "outcome": "continue",
+          "nextNodeId": "approval-screen"
+        },
+        {
+          "id": "inspect-token",
+          "text": "Inspect this token first",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "investigation",
+          "xpReward": 30,
+          "statChange": { "stat": "detection", "amount": 1 }
+        },
+        {
+          "id": "ignore-airdrop",
+          "text": "Ignore — unsolicited tokens are suspicious",
+          "emoji": "🚫",
+          "outcome": "survived"
+        },
+        {
+          "id": "ask-sensei-1",
+          "text": "Ask Sensei",
+          "emoji": "🧠",
+          "outcome": "hint",
+          "revealText": "Sensei says: Free tokens that appear out of nowhere? Classic honeypot. They WANT you to interact with the contract. Check what permissions it's actually asking for before you click anything!"
+        }
+      ]
+    },
+    {
+      "id": "approval-screen",
+      "messages": [
+        {
+          "id": "sys-approval-popup",
+          "sender": "system",
+          "text": "📋 Transaction Approval Request"
+        },
+        {
+          "id": "sys-approval-details",
+          "sender": "system",
+          "text": "🔐 Contract: FREE-TOKEN Claim (0x8b3...f21)\n\nPermission requested:\n• Token Approval: UNLIMITED ♾️\n• Tokens: ALL TOKENS IN WALLET\n• This allows the contract to spend ALL your tokens with no limit\n\nEstimated Gas: 0.003 ETH"
+        },
+        {
+          "id": "sys-approval-warning",
+          "sender": "system",
+          "text": "⚠️ This contract is requesting UNLIMITED approval for ALL tokens in your wallet."
+        }
+      ],
+      "choices": [
+        {
+          "id": "approve-unlimited",
+          "text": "Approve transaction",
+          "emoji": "✅",
+          "outcome": "rekt"
+        },
+        {
+          "id": "check-approval-amount",
+          "text": "Wait — why is it UNLIMITED?",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "investigation",
+          "xpReward": 25
+        },
+        {
+          "id": "reject-approval",
+          "text": "Reject — this approval is too broad",
+          "emoji": "❌",
+          "outcome": "survived"
+        }
+      ]
+    },
+    {
+      "id": "investigation",
+      "messages": [
+        {
+          "id": "sys-inspect-start",
+          "sender": "system",
+          "text": "🔍 Investigating FREE-TOKEN contract..."
+        },
+        {
+          "id": "sys-contract-analysis",
+          "sender": "system",
+          "text": "📋 Contract Analysis:\n• Token has no liquidity pool — you can't actually sell it\n• The 'Claim' function doesn't give you tokens — it requests an UNLIMITED approval\n• With unlimited approval, the contract owner can drain every token you hold\n• Contract is unverified, deployed 1 day ago"
+        },
+        {
+          "id": "sys-verdict",
+          "sender": "system",
+          "text": "🚨 VERDICT: This is a honeypot! The 'free tokens' are worthless bait. The real attack is the unlimited approval — once granted, the scammer drains your real tokens."
+        }
+      ],
+      "choices": [
+        {
+          "id": "approve-anyway",
+          "text": "Approve anyway — maybe it's real",
+          "emoji": "✅",
+          "outcome": "rekt"
+        },
+        {
+          "id": "reject-scam",
+          "text": "Reject and hide this scam token",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    }
+  ],
+
+  "passiveClues": [
+    "You never signed up for this airdrop — the tokens appeared uninvited",
+    "The contract is requesting UNLIMITED approval for ALL your tokens",
+    "FREE-TOKEN has no liquidity — it's untradeable",
+    "The contract was deployed only 1 day ago and is unverified"
+  ],
+
+  "activeInvestigations": [
+    {
+      "type": "check-contract",
+      "result": "Contract source code is unverified. The 'claim' function doesn't distribute tokens — it calls 'approve(spender, type(uint256).max)' which grants the owner unlimited access to drain your wallet.",
+      "cost": 0
+    },
+    {
+      "type": "inspect-link",
+      "result": "The FREE-TOKEN contract was deployed 1 day ago. It has 0 liquidity on all DEXes. The deployer wallet has been flagged on Etherscan for previous scam tokens.",
+      "cost": 0
+    },
+    {
+      "type": "search-news",
+      "result": "Multiple reports on Twitter and Reddit: 'FREE-TOKEN is a honeypot scam. DO NOT interact with it. If you already approved, revoke immediately using revoke.cash.'",
+      "cost": 0
+    }
+  ],
+
+  "education": {
+    "attackName": "Honeypot Airdrop with Unlimited Approval",
+    "difficulty": "Medium",
+    "category": "honeypot",
+    "howItWorked": [
+      { "step": 1, "text": "Scammer airdropped worthless tokens to thousands of wallets for free", "highlight": "airdrop bait" },
+      { "step": 2, "text": "The 'Claim' button didn't actually give you tokens — it triggered a token approval transaction", "highlight": "hidden approval" },
+      { "step": 3, "text": "The approval was set to UNLIMITED, meaning the contract could spend ALL your real tokens", "highlight": "unlimited approval" },
+      { "step": 4, "text": "Once approved, the scammer's bot automatically drains your valuable tokens within seconds", "highlight": "automated drain" }
+    ],
+    "redFlags": [
+      "Receiving tokens you never signed up for",
+      "Any transaction requesting UNLIMITED token approval",
+      "Tokens with no liquidity pool — you can't sell them anyway",
+      "Contracts deployed very recently with unverified source code",
+      "The 'claim' action requiring a wallet approval instead of just transferring tokens"
+    ],
+    "irlProtection": [
+      "Never interact with tokens you didn't expect to receive — just ignore them",
+      "Always read what a transaction is actually asking you to approve before confirming",
+      "If an approval says 'UNLIMITED' or a very large number, that's a major red flag",
+      "Use revoke.cash or Etherscan token approval checker to review and revoke suspicious approvals",
+      "Legitimate airdrops deposit tokens directly — they don't require you to 'claim' with an approval"
+    ]
+  },
+
+  "rektConsequences": {
+    "moneyLost": 50,
+    "moneyLostType": "percentage",
+    "hpLost": 15,
+    "streakBroken": true
+  },
+
+  "survivedRewards": {
+    "xp": 250,
+    "securityTokens": 3,
+    "coins": 150,
+    "statBoosts": [
+      { "stat": "detection", "amount": 2 },
+      { "stat": "knowledge", "amount": 2 }
+    ]
+  },
+
+  "communityRektRate": 68
+}

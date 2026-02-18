@@ -1,0 +1,235 @@
+{
+  "id": "ch1-phishing-email",
+  "chapter": 1,
+  "scenarioIndex": 3,
+  "title": "Important: Ethereum Upgrade",
+  "subtitle": "Action needed from Ethereum Foundation",
+  "icon": "📧",
+  "difficulty": 2,
+  "category": "phishing",
+  "deliveryChannel": "notification",
+  "npcAvatar": "💎",
+  "npcName": "Ethereum Foundation",
+  "isBoss": false,
+
+  "nodes": [
+    {
+      "id": "opening",
+      "messages": [
+        {
+          "id": "sys-email",
+          "sender": "system",
+          "text": "📧 New Email Notification"
+        },
+        {
+          "id": "npc-subject",
+          "sender": "npc",
+          "senderName": "Ethereum Foundation",
+          "senderAvatar": "💎",
+          "text": "Subject: URGENT — Action Required for ETH 2.0 Migration\nFrom: team@ethereum-foundation.org",
+          "delay": 500
+        },
+        {
+          "id": "npc-body",
+          "sender": "npc",
+          "senderName": "Ethereum Foundation",
+          "senderAvatar": "💎",
+          "text": "Dear Ethereum user,\n\nAs part of the ETH 2.0 network upgrade, all users must migrate their holdings to the new Proof-of-Stake chain before March 31st.\n\nWallets that have not migrated will lose access to their ETH permanently.",
+          "delay": 1200
+        },
+        {
+          "id": "npc-cta",
+          "sender": "npc",
+          "senderName": "Ethereum Foundation",
+          "senderAvatar": "💎",
+          "text": "Click below to connect your wallet and migrate your ETH automatically:\n\n🔗 https://ethereum-foundation.org/migrate\n\nThis is mandatory for all ETH holders.",
+          "delay": 1000
+        }
+      ],
+      "choices": [
+        {
+          "id": "click-migrate",
+          "text": "Connect wallet and migrate",
+          "emoji": "🔗",
+          "outcome": "continue",
+          "nextNodeId": "fake-site"
+        },
+        {
+          "id": "check-sender",
+          "text": "Check the sender's email address",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "email-inspection",
+          "xpReward": 30,
+          "statChange": { "stat": "detection", "amount": 1 }
+        },
+        {
+          "id": "delete-email",
+          "text": "Delete — Ethereum doesn't email users",
+          "emoji": "🗑️",
+          "outcome": "survived"
+        },
+        {
+          "id": "ask-sensei-1",
+          "text": "Ask Sensei",
+          "emoji": "🧠",
+          "outcome": "hint",
+          "revealText": "Sensei says: The Ethereum Foundation communicates through ethereum.org and official social media — never by email. Also, ETH 2.0 migration happened automatically. No user action was ever required!"
+        }
+      ]
+    },
+    {
+      "id": "email-inspection",
+      "messages": [
+        {
+          "id": "sys-check-sender",
+          "sender": "system",
+          "text": "🔍 Analyzing email sender..."
+        },
+        {
+          "id": "sys-sender-result",
+          "sender": "system",
+          "text": "📋 Email Analysis:\n• Sender: team@ethereum-foundation.org\n• Official domain: ethereum.org\n• ❌ 'ethereum-foundation.org' is NOT the official Ethereum domain!\n• This domain was registered 5 days ago"
+        },
+        {
+          "id": "sys-domain-compare",
+          "sender": "system",
+          "text": "📋 Domain Comparison:\n• Real: ethereum.org ✅\n• Fake: ethereum-foundation.org ❌\n\nThe scammer registered a lookalike domain to impersonate the Ethereum Foundation."
+        },
+        {
+          "id": "sys-fact",
+          "sender": "system",
+          "text": "💡 Fact: The ETH 2.0 merge happened automatically. No user needed to 'migrate' anything. If you held ETH, it transferred automatically on the real network."
+        }
+      ],
+      "choices": [
+        {
+          "id": "click-anyway",
+          "text": "Visit the link anyway — just to see",
+          "emoji": "🔗",
+          "outcome": "continue",
+          "nextNodeId": "fake-site"
+        },
+        {
+          "id": "report-phishing",
+          "text": "Report as phishing and delete",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    },
+    {
+      "id": "fake-site",
+      "messages": [
+        {
+          "id": "sys-loading-site",
+          "sender": "system",
+          "text": "🌐 Loading ethereum-foundation.org/migrate..."
+        },
+        {
+          "id": "sys-site-description",
+          "sender": "system",
+          "text": "📄 The page displays the Ethereum logo and a professional layout. It looks official but the domain is wrong."
+        },
+        {
+          "id": "npc-connect-prompt",
+          "sender": "npc",
+          "senderName": "ETH Migration Portal",
+          "senderAvatar": "💎",
+          "text": "Connect your wallet to begin the migration process. Your ETH will be transferred to the new Proof-of-Stake chain automatically.\n\n⏰ Only 48 hours remaining before the deadline.",
+          "delay": 800
+        },
+        {
+          "id": "sys-wallet-popup",
+          "sender": "system",
+          "text": "🔐 Wallet Connection Request:\nSite: ethereum-foundation.org\nPermissions: Full access to wallet, sign transactions\n\n⚠️ This site wants full access to your wallet, including the ability to sign transactions on your behalf."
+        }
+      ],
+      "choices": [
+        {
+          "id": "connect-wallet",
+          "text": "Connect my wallet",
+          "emoji": "🔗",
+          "outcome": "rekt"
+        },
+        {
+          "id": "reject-connection",
+          "text": "Cancel — this is phishing",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    }
+  ],
+
+  "passiveClues": [
+    "Sender domain 'ethereum-foundation.org' is NOT 'ethereum.org'",
+    "Domain was registered only 5 days ago",
+    "ETH 2.0 merge happened automatically — no migration needed",
+    "Ethereum Foundation doesn't send emails to individual users",
+    "Urgency tactic: fake 'deadline' to force quick action"
+  ],
+
+  "activeInvestigations": [
+    {
+      "type": "inspect-link",
+      "result": "Domain 'ethereum-foundation.org' was registered 5 days ago through an anonymous registrar. The real Ethereum Foundation uses 'ethereum.org' exclusively.",
+      "cost": 0
+    },
+    {
+      "type": "verify-identity",
+      "result": "The Ethereum Foundation confirmed: They do NOT send migration emails. The Merge to Proof-of-Stake happened automatically in September 2022. No user action was ever needed.",
+      "cost": 0
+    },
+    {
+      "type": "search-news",
+      "result": "Security researchers have flagged 'ethereum-foundation.org' as a phishing domain. Over 200 users have reported losing funds to this fake migration scam.",
+      "cost": 0
+    }
+  ],
+
+  "education": {
+    "attackName": "Fake Migration Phishing Email",
+    "difficulty": "Medium",
+    "category": "phishing",
+    "howItWorked": [
+      { "step": 1, "text": "Scammer sent a mass email impersonating the Ethereum Foundation using a lookalike domain", "highlight": "domain impersonation" },
+      { "step": 2, "text": "The email created urgency with a fake migration deadline", "highlight": "urgency" },
+      { "step": 3, "text": "The fake website requested full wallet connection with transaction signing permissions", "highlight": "wallet access" },
+      { "step": 4, "text": "Once connected, a malicious smart contract is signed that transfers all your ETH and tokens to the scammer", "highlight": "total drain" }
+    ],
+    "redFlags": [
+      "The sender's domain doesn't match the official organization's domain",
+      "Legitimate blockchain upgrades never require you to 'migrate' manually",
+      "Urgency and deadlines pressuring immediate action",
+      "Requests for full wallet access or transaction signing permissions",
+      "Emails claiming to be from a blockchain foundation that doesn't send mass emails"
+    ],
+    "irlProtection": [
+      "Always verify the sender's email domain matches the official one exactly",
+      "Check official channels (Twitter, blog) to confirm any announcements",
+      "Blockchain upgrades are automatic — you never need to 'migrate' tokens manually",
+      "Never connect your wallet to a site you reached through an email link",
+      "When in doubt, go directly to the official website by typing the URL manually"
+    ]
+  },
+
+  "rektConsequences": {
+    "moneyLost": 60,
+    "moneyLostType": "percentage",
+    "hpLost": 20,
+    "streakBroken": true
+  },
+
+  "survivedRewards": {
+    "xp": 250,
+    "securityTokens": 2,
+    "coins": 125,
+    "statBoosts": [
+      { "stat": "detection", "amount": 2 },
+      { "stat": "knowledge", "amount": 1 }
+    ]
+  },
+
+  "communityRektRate": 51
+}

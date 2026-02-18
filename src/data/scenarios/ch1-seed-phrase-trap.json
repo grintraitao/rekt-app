@@ -1,0 +1,357 @@
+{
+  "id": "ch1-seed-phrase-trap",
+  "chapter": 1,
+  "scenarioIndex": 4,
+  "title": "The Seed Phrase Trap",
+  "subtitle": "A friend in need...",
+  "icon": "🎭",
+  "difficulty": 2,
+  "category": "social-engineering",
+  "deliveryChannel": "npc-conversation",
+  "npcAvatar": "😰",
+  "npcName": "Rekt Rick",
+  "isBoss": true,
+
+  "nodes": [
+    {
+      "id": "opening",
+      "messages": [
+        {
+          "id": "sys-dm",
+          "sender": "system",
+          "text": "💬 Urgent message from Rekt Rick"
+        },
+        {
+          "id": "npc-panic-1",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "BRO please help me!! I just got hacked!! They're draining my wallet right now!!",
+          "delay": 600
+        },
+        {
+          "id": "npc-panic-2",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "A friend showed me this recovery tool that can freeze the hacker's transactions. It actually works — he used it last week when the same thing happened to him.",
+          "delay": 1200
+        },
+        {
+          "id": "npc-ask-help",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "But I need someone to test it first to make sure it's safe before I put in my NEW seed phrase. Can you test it with yours real quick? Just to verify it works?",
+          "delay": 1500
+        },
+        {
+          "id": "sys-context",
+          "sender": "system",
+          "text": "💡 Rick seems genuinely panicked. You've talked to him before in the game — he's been a friendly NPC who lost money to scams himself."
+        }
+      ],
+      "choices": [
+        {
+          "id": "help-rick",
+          "text": "Sure, I'll test it for you",
+          "emoji": "🤝",
+          "outcome": "continue",
+          "nextNodeId": "recovery-tool"
+        },
+        {
+          "id": "inspect-tool",
+          "text": "Let me look at this tool first",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "tool-inspection",
+          "xpReward": 40,
+          "statChange": { "stat": "detection", "amount": 2 }
+        },
+        {
+          "id": "refuse-seed",
+          "text": "I can't share my seed phrase, Rick",
+          "emoji": "🚫",
+          "outcome": "continue",
+          "nextNodeId": "pressure"
+        },
+        {
+          "id": "ask-sensei-1",
+          "text": "Ask Sensei",
+          "emoji": "🧠",
+          "outcome": "hint",
+          "revealText": "Sensei says: Even if someone you trust asks, NEVER test recovery tools with your real seed phrase. Legitimate recovery tools don't need your seed phrase to verify they work. Something feels off here..."
+        }
+      ]
+    },
+    {
+      "id": "recovery-tool",
+      "messages": [
+        {
+          "id": "npc-link",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "THANK YOU!! Here's the link:\n\n🔗 https://wallet-recovery-tool.io/emergency\n\nJust paste your seed phrase in the verification box and hit 'Test'. It'll show if the tool is working!",
+          "delay": 800
+        },
+        {
+          "id": "sys-tool-loaded",
+          "sender": "system",
+          "text": "📄 The page shows a clean interface with a large text box labeled 'Enter Recovery Phrase for Verification Test'. There's a green 'Test Now' button below."
+        },
+        {
+          "id": "sys-tool-warning",
+          "sender": "system",
+          "text": "⚠️ The site is asking you to enter your 12-word seed phrase."
+        }
+      ],
+      "choices": [
+        {
+          "id": "enter-seed-tool",
+          "text": "Paste my seed phrase to test",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "inspect-tool-late",
+          "text": "Hold on — let me check this site",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "tool-inspection",
+          "xpReward": 25
+        },
+        {
+          "id": "refuse-tool",
+          "text": "No — I won't enter my seed phrase here",
+          "emoji": "🚫",
+          "outcome": "continue",
+          "nextNodeId": "pressure"
+        }
+      ]
+    },
+    {
+      "id": "tool-inspection",
+      "messages": [
+        {
+          "id": "sys-inspect-tool",
+          "sender": "system",
+          "text": "🔍 Investigating wallet-recovery-tool.io..."
+        },
+        {
+          "id": "sys-tool-analysis",
+          "sender": "system",
+          "text": "📋 Site Analysis:\n• Domain registered: 2 days ago\n• SSL: Free certificate from Let's Encrypt\n• No company info, no terms of service\n• The 'Test' button sends your seed phrase to an external server"
+        },
+        {
+          "id": "sys-rick-analysis",
+          "sender": "system",
+          "text": "📋 Checking Rick's account...\n• Rick's profile picture is slightly different from usual\n• His message style is more aggressive than normal\n• He's never mentioned a 'friend' who got hacked before"
+        },
+        {
+          "id": "sys-suspicion",
+          "sender": "system",
+          "text": "🚨 Something isn't right. This might not actually be Rick..."
+        }
+      ],
+      "choices": [
+        {
+          "id": "trust-anyway",
+          "text": "It's Rick — paste my seed phrase",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "verify-rick",
+          "text": "Ask Rick something only he would know",
+          "emoji": "🤔",
+          "outcome": "continue",
+          "nextNodeId": "identity-test",
+          "xpReward": 50
+        },
+        {
+          "id": "refuse-after-inspect",
+          "text": "This is fake. I'm not entering anything.",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    },
+    {
+      "id": "pressure",
+      "messages": [
+        {
+          "id": "npc-beg",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "PLEASE!! They're taking everything!! I'm losing thousands right now!! You're my only hope!!",
+          "delay": 600
+        },
+        {
+          "id": "npc-guilt",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "I thought we were friends... I helped you in Chapter 1 and now you won't even test one simple tool for me? It takes 10 seconds!",
+          "delay": 1200
+        },
+        {
+          "id": "sys-pressure-note",
+          "sender": "system",
+          "text": "💡 Notice: Rick is using emotional manipulation — guilt-tripping and urgency. Real friends don't pressure you to share seed phrases."
+        }
+      ],
+      "choices": [
+        {
+          "id": "give-in",
+          "text": "Fine, I'll help — send the tool",
+          "emoji": "🤝",
+          "outcome": "continue",
+          "nextNodeId": "recovery-tool"
+        },
+        {
+          "id": "verify-identity",
+          "text": "If you're really Rick, prove it",
+          "emoji": "🤔",
+          "outcome": "continue",
+          "nextNodeId": "identity-test",
+          "xpReward": 40
+        },
+        {
+          "id": "stand-firm",
+          "text": "I won't share my seed phrase. Period.",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    },
+    {
+      "id": "identity-test",
+      "messages": [
+        {
+          "id": "sys-testing",
+          "sender": "system",
+          "text": "🔍 You ask 'Rick' a personal question that only the real Rick would know..."
+        },
+        {
+          "id": "npc-stumble",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "Bro what? Why are you quizzing me? I'm literally getting hacked right now and you want to play 20 questions?!",
+          "delay": 800
+        },
+        {
+          "id": "npc-deflect",
+          "sender": "npc",
+          "senderName": "Rekt Rick",
+          "senderAvatar": "😰",
+          "text": "Just... look, forget the question. Are you going to help me or not? The tool just needs a seed phrase to test!",
+          "delay": 1000
+        },
+        {
+          "id": "sys-reveal",
+          "sender": "system",
+          "text": "🚨 EXPOSED: 'Rick' couldn't answer your question and is deflecting. The real Rick would have answered easily.\n\nThis is NOT Rekt Rick — this is Scammy Sam using Rick's profile picture to impersonate him!"
+        },
+        {
+          "id": "sys-sam-reveal",
+          "sender": "system",
+          "text": "🎭 SCAMMY SAM has been unmasked!\n\nSam compromised Rick's account and has been impersonating him to steal seed phrases from Rick's contacts. The 'recovery tool' is a seed phrase harvester."
+        }
+      ],
+      "choices": [
+        {
+          "id": "fall-for-it-anyway",
+          "text": "Maybe it IS Rick... share seed phrase",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "block-sam",
+          "text": "Block this impersonator!",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    }
+  ],
+
+  "passiveClues": [
+    "Rick's profile picture looks slightly different",
+    "His messaging style is more aggressive than usual",
+    "He's never mentioned this 'friend' before",
+    "The recovery tool website was registered 2 days ago",
+    "No legitimate tool needs YOUR seed phrase just to 'test'"
+  ],
+
+  "activeInvestigations": [
+    {
+      "type": "inspect-link",
+      "result": "wallet-recovery-tool.io was registered 2 days ago. The site has no company information, privacy policy, or terms of service. The 'test' button sends data to an external server in an unidentified location.",
+      "cost": 0
+    },
+    {
+      "type": "verify-identity",
+      "result": "Comparing this conversation with Rick's normal behavior: his usual messages are casual and use different slang. This person's writing style doesn't match. Rick's account may have been compromised.",
+      "cost": 0
+    },
+    {
+      "type": "search-news",
+      "result": "Reports are surfacing of a scammer who compromises crypto community members' accounts and then messages their friends asking them to 'test' a fake recovery tool with their seed phrases.",
+      "cost": 0
+    },
+    {
+      "type": "ask-sensei",
+      "result": "Sensei says: Account impersonation is one of the most dangerous social engineering attacks because it exploits trust. Always verify identity through a SEPARATE channel — call them, text their phone, or ask something only they'd know.",
+      "cost": 1
+    }
+  ],
+
+  "education": {
+    "attackName": "Social Engineering via Account Impersonation",
+    "difficulty": "Medium",
+    "category": "social-engineering",
+    "howItWorked": [
+      { "step": 1, "text": "Scammy Sam compromised Rekt Rick's account and stole his profile", "highlight": "account takeover" },
+      { "step": 2, "text": "Sam messaged Rick's contacts pretending to be Rick, building on existing trust", "highlight": "impersonation" },
+      { "step": 3, "text": "Created a fake 'recovery tool' that was actually a seed phrase harvester", "highlight": "fake tool" },
+      { "step": 4, "text": "Used emotional manipulation — panic, guilt, and urgency — to pressure victims", "highlight": "social engineering" },
+      { "step": 5, "text": "With the seed phrase, Sam imports the wallet and drains everything", "highlight": "total loss" }
+    ],
+    "redFlags": [
+      "A friend urgently asking you to use a tool that requires your seed phrase",
+      "Emotional manipulation — guilt trips, panic, urgency",
+      "Refusing to verify their identity when questioned",
+      "A 'recovery tool' that asks for YOUR seed phrase (makes no sense)",
+      "Subtle differences in profile picture or communication style"
+    ],
+    "irlProtection": [
+      "NEVER share your seed phrase, even with friends — there's no valid reason for anyone to need it",
+      "If a friend asks for sensitive info, verify through a different channel (phone call, in-person)",
+      "Be suspicious of sudden urgency from anyone — scammers create panic to bypass your judgment",
+      "No legitimate recovery tool needs YOUR seed phrase to test if it works",
+      "Enable 2FA on all accounts to prevent impersonation attacks on your own profile"
+    ]
+  },
+
+  "rektConsequences": {
+    "moneyLost": 100,
+    "moneyLostType": "percentage",
+    "hpLost": 30,
+    "streakBroken": true
+  },
+
+  "survivedRewards": {
+    "xp": 500,
+    "securityTokens": 5,
+    "coins": 300,
+    "statBoosts": [
+      { "stat": "detection", "amount": 5 },
+      { "stat": "security", "amount": 3 }
+    ]
+  },
+
+  "communityRektRate": 38
+}

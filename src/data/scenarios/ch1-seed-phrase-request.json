@@ -1,0 +1,230 @@
+{
+  "id": "ch1-seed-phrase-request",
+  "chapter": 1,
+  "scenarioIndex": 1,
+  "title": "Wallet Verification Required",
+  "subtitle": "Security alert",
+  "icon": "🔔",
+  "difficulty": 1,
+  "category": "phishing",
+  "deliveryChannel": "notification",
+  "npcAvatar": "🔒",
+  "npcName": "Wallet Security",
+  "isBoss": false,
+
+  "nodes": [
+    {
+      "id": "opening",
+      "messages": [
+        {
+          "id": "sys-notif",
+          "sender": "system",
+          "text": "🔔 Push Notification: Security Alert"
+        },
+        {
+          "id": "npc-alert",
+          "sender": "npc",
+          "senderName": "Wallet Security",
+          "senderAvatar": "🔒",
+          "text": "⚠️ SECURITY ALERT: Unusual login detected from a new device (IP: 185.203.xx.xx, Location: Unknown).",
+          "delay": 500
+        },
+        {
+          "id": "npc-action",
+          "sender": "npc",
+          "senderName": "Wallet Security",
+          "senderAvatar": "🔒",
+          "text": "Your wallet will be suspended in 24 hours unless you verify ownership. Tap below to verify:",
+          "delay": 1000
+        },
+        {
+          "id": "npc-link",
+          "sender": "npc",
+          "senderName": "Wallet Security",
+          "senderAvatar": "🔒",
+          "text": "🔗 https://metamask-verify.com/secure/wallet-check",
+          "delay": 800
+        }
+      ],
+      "choices": [
+        {
+          "id": "click-link",
+          "text": "Open the verification link",
+          "emoji": "🔗",
+          "outcome": "continue",
+          "nextNodeId": "fake-page"
+        },
+        {
+          "id": "inspect-url",
+          "text": "Check the URL carefully",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "url-inspection",
+          "xpReward": 30,
+          "statChange": { "stat": "detection", "amount": 1 }
+        },
+        {
+          "id": "dismiss-notif",
+          "text": "Dismiss — this looks suspicious",
+          "emoji": "🚫",
+          "outcome": "survived"
+        },
+        {
+          "id": "ask-sensei-1",
+          "text": "Ask Sensei",
+          "emoji": "🧠",
+          "outcome": "hint",
+          "revealText": "Sensei says: Always check the domain! The real MetaMask site is metamask.io — anything else like 'metamask-verify.com' is a fake copycat."
+        }
+      ]
+    },
+    {
+      "id": "fake-page",
+      "messages": [
+        {
+          "id": "sys-loading",
+          "sender": "system",
+          "text": "🌐 Loading metamask-verify.com..."
+        },
+        {
+          "id": "sys-page-loaded",
+          "sender": "system",
+          "text": "📄 The page looks almost identical to MetaMask's real site. It displays your wallet address and asks you to 'confirm ownership' by entering your 12-word recovery phrase."
+        },
+        {
+          "id": "npc-fake-prompt",
+          "sender": "npc",
+          "senderName": "Verification Portal",
+          "senderAvatar": "🔒",
+          "text": "Please enter your 12-word Secret Recovery Phrase below to verify wallet ownership and prevent suspension.",
+          "delay": 800
+        }
+      ],
+      "choices": [
+        {
+          "id": "enter-seed",
+          "text": "Enter my recovery phrase",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "notice-url",
+          "text": "Wait... check the URL again",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "url-inspection",
+          "xpReward": 20
+        },
+        {
+          "id": "close-page",
+          "text": "Close this page immediately",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    },
+    {
+      "id": "url-inspection",
+      "messages": [
+        {
+          "id": "sys-url-check",
+          "sender": "system",
+          "text": "🔍 URL Analysis:"
+        },
+        {
+          "id": "sys-url-result",
+          "sender": "system",
+          "text": "📋 Domain Comparison:\n• This link: metamask-verify.com\n• Official site: metamask.io\n\n❌ These are COMPLETELY different domains!\n\n'metamask-verify.com' was registered 3 days ago by an anonymous registrant. The real MetaMask will never ask you to verify through a third-party domain."
+        },
+        {
+          "id": "sys-ssl",
+          "sender": "system",
+          "text": "🔐 Note: The fake site has an SSL certificate (padlock icon) — but that only means the connection is encrypted, NOT that the site is legitimate. Scammers use free SSL certificates too!"
+        }
+      ],
+      "choices": [
+        {
+          "id": "enter-seed-anyway",
+          "text": "Enter phrase anyway — it has a padlock",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "close-scam",
+          "text": "Close & report this phishing site",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
+      ]
+    }
+  ],
+
+  "passiveClues": [
+    "URL is metamask-verify.com, not metamask.io",
+    "Domain was registered only 3 days ago",
+    "Legitimate services don't send verification links via push notifications",
+    "The page asks for your full recovery phrase — real MetaMask never does this"
+  ],
+
+  "activeInvestigations": [
+    {
+      "type": "inspect-link",
+      "result": "Domain 'metamask-verify.com' was registered 3 days ago through an anonymous registrar. The real MetaMask domain is 'metamask.io'. These are completely different websites.",
+      "cost": 0
+    },
+    {
+      "type": "verify-identity",
+      "result": "MetaMask confirms: We never send push notifications asking you to verify your wallet. All security is handled within the extension itself.",
+      "cost": 0
+    },
+    {
+      "type": "search-news",
+      "result": "Multiple users have reported 'metamask-verify.com' as a phishing site on crypto forums. It has been flagged by PhishTank and Google Safe Browsing.",
+      "cost": 0
+    }
+  ],
+
+  "education": {
+    "attackName": "Phishing via Fake Verification Page",
+    "difficulty": "Easy",
+    "category": "phishing",
+    "howItWorked": [
+      { "step": 1, "text": "Scammer sent a fake 'security alert' push notification", "highlight": "fake notification" },
+      { "step": 2, "text": "Link pointed to metamask-verify.com — a clone site, NOT the real metamask.io", "highlight": "fake domain" },
+      { "step": 3, "text": "The fake site looked identical to MetaMask and asked for your recovery phrase", "highlight": "visual clone" },
+      { "step": 4, "text": "Entering your phrase gives the scammer full access to import and drain your wallet", "highlight": "total loss" }
+    ],
+    "redFlags": [
+      "URL doesn't match the official domain (metamask.io)",
+      "Push notifications asking to 'verify' your wallet",
+      "Any website asking for your full recovery phrase",
+      "Having an SSL padlock does NOT mean a site is safe — only that the connection is encrypted"
+    ],
+    "irlProtection": [
+      "Always check the URL letter by letter — scammers use similar-looking domains",
+      "Bookmark official sites and only access them through your bookmarks",
+      "No legitimate wallet or exchange will ever ask for your recovery phrase online",
+      "If you receive a security alert, go directly to the official app — never click links in notifications",
+      "SSL padlocks only mean encryption, not legitimacy — phishing sites have them too"
+    ]
+  },
+
+  "rektConsequences": {
+    "moneyLost": 80,
+    "moneyLostType": "percentage",
+    "hpLost": 20,
+    "streakBroken": true
+  },
+
+  "survivedRewards": {
+    "xp": 200,
+    "securityTokens": 2,
+    "coins": 100,
+    "statBoosts": [
+      { "stat": "detection", "amount": 2 },
+      { "stat": "security", "amount": 1 }
+    ]
+  },
+
+  "communityRektRate": 55
+}

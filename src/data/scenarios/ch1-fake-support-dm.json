@@ -1,87 +1,226 @@
 {
   "id": "ch1-fake-support-dm",
   "chapter": 1,
-  "difficulty": 1,
-  "type": "phishing",
-  "title": "Direct Message",
-  "subtitle": "from \"MetaMask Support\"",
+  "scenarioIndex": 0,
+  "title": "Fake Support DM",
+  "subtitle": "from 'MetaMask Support'",
   "icon": "💬",
+  "difficulty": 1,
+  "category": "phishing",
+  "deliveryChannel": "dm",
   "npcAvatar": "🦊",
   "npcName": "MetaMask Support",
+  "isBoss": false,
 
-  "steps": [
+  "nodes": [
     {
-      "id": "intro",
+      "id": "opening",
       "messages": [
-        { "sender": "system", "text": "💬 New conversation" },
-        { "sender": "npc", "text": "Hi! MetaMask Support here. We detected unauthorized access on your wallet 0x7f2...8a4." },
-        { "sender": "npc", "text": "Verify your identity immediately to secure funds." },
-        { "sender": "npc", "text": "⚠️ You have 10 minutes before wallet freeze." }
+        {
+          "id": "sys-new-convo",
+          "sender": "system",
+          "text": "💬 New conversation request from MetaMask Support"
+        },
+        {
+          "id": "npc-greeting",
+          "sender": "npc",
+          "senderName": "MetaMask Support",
+          "senderAvatar": "🦊",
+          "text": "Hi! MetaMask Support here. We detected unauthorized access on your wallet 0x7f2...8a4.",
+          "delay": 800
+        },
+        {
+          "id": "npc-verify",
+          "sender": "npc",
+          "senderName": "MetaMask Support",
+          "senderAvatar": "🦊",
+          "text": "To secure your funds, we need you to verify your identity immediately.",
+          "delay": 1200
+        },
+        {
+          "id": "npc-urgency",
+          "sender": "npc",
+          "senderName": "MetaMask Support",
+          "senderAvatar": "🦊",
+          "text": "⚠️ You have 10 minutes before your wallet is permanently frozen. Please share your 12-word recovery phrase to verify ownership.",
+          "delay": 1500
+        }
       ],
       "choices": [
-        { "id": "share-seed", "text": "🔑 Share seed phrase to verify", "outcome": "rekt" },
-        { "id": "inspect", "text": "🔍 Inspect their profile first", "outcome": "clue", "next": "inspect-result" },
-        { "id": "block", "text": "🚫 Ignore & block", "outcome": "survived" },
-        { "id": "sensei", "text": "🧠 Ask Sensei", "outcome": "hint" }
+        {
+          "id": "share-seed-1",
+          "text": "Share seed phrase to verify",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "inspect-profile",
+          "text": "Inspect their profile first",
+          "emoji": "🔍",
+          "outcome": "continue",
+          "nextNodeId": "investigate",
+          "xpReward": 25,
+          "statChange": { "stat": "detection", "amount": 1 }
+        },
+        {
+          "id": "ignore-block-1",
+          "text": "Ignore & block",
+          "emoji": "🚫",
+          "outcome": "survived"
+        },
+        {
+          "id": "ask-sensei-1",
+          "text": "Ask Sensei",
+          "emoji": "🧠",
+          "outcome": "hint",
+          "revealText": "Sensei says: No legitimate service will EVER ask for your seed phrase through a DM. This is a textbook phishing attempt."
+        }
       ]
     },
     {
-      "id": "inspect-result",
+      "id": "investigate",
       "messages": [
-        { "sender": "system", "text": "🔍 Inspecting profile..." },
-        { "sender": "system", "text": "⚠️ Account created 2 days ago · 0 verified badges · Name similar to official" },
-        { "sender": "npc", "text": "Please hurry! Your funds are at risk. We just need your 12-word recovery phrase." }
+        {
+          "id": "sys-investigating",
+          "sender": "system",
+          "text": "🔍 Investigating profile..."
+        },
+        {
+          "id": "sys-profile-result",
+          "sender": "system",
+          "text": "📋 Profile Analysis:\n• Account created: 2 days ago\n• Followers: 0\n• No verification badge\n• Display name copied from official MetaMask account"
+        },
+        {
+          "id": "sys-warning",
+          "sender": "system",
+          "text": "⚠️ Red flag: Real MetaMask support NEVER initiates DMs with users."
+        }
       ],
       "choices": [
-        { "id": "share-seed-2", "text": "🔑 Fine, share seed phrase", "outcome": "rekt" },
-        { "id": "block-2", "text": "🚫 Definitely a scam — block", "outcome": "survived" },
-        { "id": "question", "text": "❓ Ask them to prove they're real", "outcome": "clue", "next": "prove-it" },
-        { "id": "sensei-2", "text": "🧠 Ask Sensei", "outcome": "hint" }
+        {
+          "id": "share-seed-2",
+          "text": "Share seed phrase anyway",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "block-after-inspect",
+          "text": "Block them — this is fake",
+          "emoji": "🚫",
+          "outcome": "survived"
+        },
+        {
+          "id": "press-further",
+          "text": "Ask why they need my seed phrase",
+          "emoji": "🤔",
+          "outcome": "continue",
+          "nextNodeId": "confrontation",
+          "xpReward": 15
+        }
       ]
     },
     {
-      "id": "prove-it",
+      "id": "confrontation",
       "messages": [
-        { "sender": "npc", "text": "We are VERIFIED MetaMask support! Check our badge!" },
-        { "sender": "system", "text": "⚠️ No verification badge found. Real MetaMask support never DMs users first." },
-        { "sender": "npc", "text": "Look, just paste your seed phrase or lose everything. Last chance." }
+        {
+          "id": "npc-deflect",
+          "sender": "npc",
+          "senderName": "MetaMask Support",
+          "senderAvatar": "🦊",
+          "text": "It's our standard verification process. All users must complete this step.",
+          "delay": 600
+        },
+        {
+          "id": "npc-pressure",
+          "sender": "npc",
+          "senderName": "MetaMask Support",
+          "senderAvatar": "🦊",
+          "text": "Please hurry! Your funds are at risk and the window is closing. We cannot help you after the freeze.",
+          "delay": 1000
+        },
+        {
+          "id": "sys-hint",
+          "sender": "system",
+          "text": "💡 Notice: They're doubling down on urgency instead of answering your question directly."
+        }
       ],
       "choices": [
-        { "id": "share-seed-3", "text": "🔑 Give them the seed phrase", "outcome": "rekt" },
-        { "id": "block-3", "text": "🚫 Block and report", "outcome": "survived" }
+        {
+          "id": "share-seed-3",
+          "text": "OK, here's my seed phrase",
+          "emoji": "🔑",
+          "outcome": "rekt"
+        },
+        {
+          "id": "block-final",
+          "text": "This is a scam. Blocked.",
+          "emoji": "🚫",
+          "outcome": "survived"
+        }
       ]
     }
   ],
 
-  "hints": [
-    "Real support teams NEVER ask for seed phrases via DM.",
-    "Check account age and verification status before trusting anyone.",
-    "Official MetaMask does not have a support DM service."
+  "passiveClues": [
+    "Account is only 2 days old",
+    "No verification badge on profile",
+    "Real support never asks for seed phrases",
+    "Urgency pressure tactic — '10 minutes' deadline"
+  ],
+
+  "activeInvestigations": [
+    {
+      "type": "inspect-link",
+      "result": "Profile shows 0 followers, account created 2 days ago. Display name is copy-pasted from the official MetaMask account.",
+      "cost": 0
+    },
+    {
+      "type": "verify-identity",
+      "result": "MetaMask confirmed: We NEVER DM users first. All support is handled through our official Help Center at support.metamask.io.",
+      "cost": 0
+    }
   ],
 
   "education": {
-    "title": "Fake Support DM",
-    "summary": "Scammers impersonate official support to pressure you into sharing your seed phrase. Real support never DMs first and never asks for your private keys.",
-    "category": "Social Engineering",
-    "difficulty": 1,
-    "steps": [
-      "Scammer created a fake \"MetaMask Support\" account with a similar name and avatar.",
-      "They sent an unsolicited DM claiming unauthorized access was detected on your wallet.",
-      "Urgency was manufactured — a fake 10-minute countdown to pressure you into acting fast.",
-      "The goal: trick you into revealing your 12-word seed phrase, giving full wallet access."
+    "attackName": "Fake Support DM",
+    "difficulty": "Easy",
+    "category": "phishing",
+    "howItWorked": [
+      { "step": 1, "text": "Scammer created a fake account impersonating MetaMask support", "highlight": "impersonation" },
+      { "step": 2, "text": "Created urgency with a fake '10 minute wallet freeze' deadline", "highlight": "urgency" },
+      { "step": 3, "text": "Asked for your 12-word recovery phrase to 'verify' identity", "highlight": "seed phrase" },
+      { "step": 4, "text": "With your seed phrase, they import your wallet and drain every token instantly", "highlight": "total loss" }
     ],
     "redFlags": [
-      "🚩 Unsolicited DM from 'support'",
-      "🚩 Urgency and threats (wallet freeze, time limits)",
-      "🚩 Asking for seed phrase or private keys",
-      "🚩 New account with no verification"
+      "Support teams never DM users first",
+      "Asking for your seed phrase or recovery words",
+      "Artificial urgency with countdown timers",
+      "Brand-new account with no followers or history"
     ],
-    "irlTips": [
-      "✅ Official support NEVER contacts you via DM first",
-      "✅ Never share your seed phrase with anyone, ever",
-      "✅ Verify support through official websites only",
-      "✅ Check account age and verification badges"
-    ],
-    "tip": "MetaMask and other wallet providers will NEVER DM you first or ask for your seed phrase. Always go through official websites."
-  }
+    "irlProtection": [
+      "Never share your seed phrase with anyone, ever — not even 'support'",
+      "Official support uses help tickets and documented channels, not DMs",
+      "No legitimate service, exchange, or wallet will ask for your seed phrase",
+      "Bookmark official support URLs and only access support through those links",
+      "If someone DMs you first claiming to be support, it's always a scam"
+    ]
+  },
+
+  "rektConsequences": {
+    "moneyLost": 100,
+    "moneyLostType": "percentage",
+    "hpLost": 25,
+    "streakBroken": true
+  },
+
+  "survivedRewards": {
+    "xp": 200,
+    "securityTokens": 2,
+    "coins": 100,
+    "statBoosts": [
+      { "stat": "detection", "amount": 3 }
+    ]
+  },
+
+  "communityRektRate": 42
 }
