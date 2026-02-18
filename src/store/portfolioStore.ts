@@ -1,295 +1,642 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
-export type Transaction = {
-  id: string;
-  type: "Received" | "Sent" | "Swap" | "Staking";
-  date: string;
-  amount: string;
-  value: string;
-};
+// ── Type Definitions ────────────────────────────────────────────────────────────
 
-export type Holding = {
+export interface Token {
   id: string;
   name: string;
   symbol: string;
-  icon: string;
+  emoji: string;
   iconColor: string;
-  iconBg: string;
   amount: number;
-  displayAmount: string;
-  value: number;
-  changePct: number;
-  chartData: number[];
-  transactions: Transaction[];
-};
+  pricePerUnit: number;
+  dailyChangePct: number;
+  riskLevel: "low" | "medium" | "high";
+  scamExposure: "low" | "medium" | "high" | "very-high";
+  isScamToken: boolean;
+  isSuspicious: boolean;
+}
 
-export type ActivityFilter = "All" | "Received" | "Sent" | "Swaps" | "Alerts";
-
-export type RecentActivity = {
+export interface Investment {
   id: string;
-  icon: string;
-  iconBg: string;
-  label: string;
-  labelColor?: string;
-  sub: string;
-  subColor?: string;
-  value: string;
-  valueColor?: string;
-  isSuspicious?: boolean;
-  scamType?: "phishing" | "fake-airdrop" | "impersonation";
-  filter: ActivityFilter;
-  detail?: string;
-};
+  name: string;
+  type: "staking" | "liquidity-pool" | "token" | "nft" | "yield-farm";
+  amountInvested: number;
+  dailyReturnPct: number;
+  riskLevel: "low" | "medium" | "high";
+  scamExposure: "low" | "medium" | "high" | "very-high";
+  isActive: boolean;
+  daysActive: number;
+  rugPullDay?: number;
+}
 
-type PortfolioState = {
-  holdings: Holding[];
-  recentActivity: RecentActivity[];
+export interface Transaction {
+  id: string;
+  type:
+    | "received"
+    | "sent"
+    | "swap"
+    | "staking-reward"
+    | "airdrop"
+    | "investment-return"
+    | "rekt-loss"
+    | "dust-attack";
+  label: string;
+  sublabel: string;
+  amount: number;
+  timestamp: string;
+  isSuspicious: boolean;
+  linkedScenarioId?: string;
+}
+
+export interface PortfolioState {
+  // Core
+  holdings: Token[];
   totalValue: number;
   dailyChange: number;
   dailyChangePct: number;
-  hp: number;
-  maxHp: number;
-  streak: number;
-  takeDamage: (amount: number) => void;
-  subtractValue: (amount: number) => void;
-  incrementStreak: () => void;
-};
 
-export const usePortfolioStore = create<PortfolioState>((set, get) => ({
-  holdings: [
+  // Investments
+  activeInvestments: Investment[];
+
+  // History
+  transactions: Transaction[];
+  portfolioHistory: number[];
+
+  // All-time stats
+  allTimeHigh: number;
+  totalEarned: number;
+  totalLost: number;
+}
+
+interface PortfolioActions {
+  // Portfolio management
+  initializePortfolio: (playerClass: string) => void;
+  recalculateTotals: () => void;
+  addHolding: (token: Token) => void;
+  removeHolding: (tokenId: string) => void;
+  updateTokenPrice: (
+    tokenId: string,
+    newPrice: number,
+    changePct: number,
+  ) => void;
+
+  // Transactions
+  addTransaction: (tx: Omit<Transaction, "id" | "timestamp">) => void;
+  getRecentTransactions: (count: number) => Transaction[];
+  getSuspiciousTransactions: () => Transaction[];
+
+  // Investments
+  createInvestment: (
+    investment: Omit<Investment, "id" | "daysActive">,
+  ) => void;
+  processInvestmentReturns: () => void;
+  checkRugPulls: () => Investment[];
+  removeInvestment: (investmentId: string) => void;
+
+  // Economy
+  addFunds: (amount: number, source: string) => void;
+  drainFunds: (amount: number, reason: string) => void;
+  getPortfolioGrowthRate: () => number;
+
+  // Daily simulation
+  simulateMarketDay: () => void;
+
+  // Scam injection
+  injectScamToken: (token: Token) => void;
+  injectScamTransaction: (tx: Omit<Transaction, "id" | "timestamp">) => void;
+
+  // Snapshots
+  takeSnapshot: () => void;
+  getChartData: (days: number) => number[];
+
+  // Reset
+  resetPortfolio: () => void;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────────
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 11);
+}
+
+function nowISO(): string {
+  return new Date().toISOString();
+}
+
+function randomBetween(min: number, max: number): number {
+  return min + Math.random() * (max - min);
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function computeTotalValue(holdings: Token[]): number {
+  return round2(
+    holdings.reduce((sum, t) => sum + t.amount * t.pricePerUnit, 0),
+  );
+}
+
+// ── Starting Holdings ───────────────────────────────────────────────────────────
+
+function makeBaseHoldings(): Token[] {
+  return [
     {
       id: "eth",
       name: "Ethereum",
       symbol: "ETH",
-      icon: "Ξ",
+      emoji: "Ξ",
       iconColor: "#627eea",
-      iconBg: "#627eea33",
-      amount: 3.2,
-      displayAmount: "3.2 ETH",
-      value: 9200,
-      changePct: 3.1,
-      chartData: [2650, 2720, 2680, 2790, 2830, 2810, 2875],
-      transactions: [
-        { id: "e1", type: "Received", date: "Feb 15", amount: "+0.5 ETH", value: "$1,437" },
-        { id: "e2", type: "Swap", date: "Feb 12", amount: "1,000 USDC → 0.35 ETH", value: "$1,000" },
-        { id: "e3", type: "Staking", date: "Feb 10", amount: "+0.012 ETH", value: "$34" },
-        { id: "e4", type: "Sent", date: "Feb 8", amount: "-0.2 ETH", value: "$560" },
-      ],
+      amount: 2.5,
+      pricePerUnit: 2875,
+      dailyChangePct: 3.1,
+      riskLevel: "low",
+      scamExposure: "low",
+      isScamToken: false,
+      isSuspicious: false,
     },
     {
       id: "usdc",
       name: "USDC",
       symbol: "USDC",
-      icon: "$",
+      emoji: "$",
       iconColor: "#2775ca",
-      iconBg: "#2775ca33",
-      amount: 1647,
-      displayAmount: "1,647 USDC",
-      value: 1647,
-      changePct: 0.0,
-      chartData: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-      transactions: [
-        { id: "u1", type: "Received", date: "Feb 14", amount: "+500 USDC", value: "$500" },
-        { id: "u2", type: "Swap", date: "Feb 11", amount: "0.35 ETH → 1,000 USDC", value: "$1,000" },
-        { id: "u3", type: "Sent", date: "Feb 9", amount: "-200 USDC", value: "$200" },
-      ],
+      amount: 1500,
+      pricePerUnit: 1.0,
+      dailyChangePct: 0,
+      riskLevel: "low",
+      scamExposure: "low",
+      isScamToken: false,
+      isSuspicious: false,
     },
     {
-      id: "moonrise",
-      name: "$MOONRISE",
-      symbol: "MOON",
-      icon: "🌙",
-      iconColor: "#ffd700",
-      iconBg: "rgba(255,215,0,0.15)",
-      amount: 50000,
-      displayAmount: "50,000 MOON",
-      value: 985,
-      changePct: 47,
-      chartData: [0.008, 0.009, 0.011, 0.013, 0.012, 0.016, 0.0197],
-      transactions: [
-        { id: "m1", type: "Received", date: "Feb 13", amount: "+50,000 MOON", value: "$420" },
-        { id: "m2", type: "Staking", date: "Feb 11", amount: "+1,200 MOON", value: "$18" },
-        { id: "m3", type: "Swap", date: "Feb 10", amount: "200 USDC → 25,000 MOON", value: "$200" },
-      ],
+      id: "rekt",
+      name: "REKT Token",
+      symbol: "REKT",
+      emoji: "\uD83D\uDC80",
+      iconColor: "#ff3366",
+      amount: 1000,
+      pricePerUnit: 0.5,
+      dailyChangePct: 12.5,
+      riskLevel: "medium",
+      scamExposure: "medium",
+      isScamToken: false,
+      isSuspicious: false,
     },
-  ],
-  recentActivity: [
-    {
-      id: "recv-eth",
-      icon: "📥",
-      iconBg: "#00ff8833",
-      label: "Received 3.2 ETH",
-      sub: "From 0x7f2...8a4",
-      value: "$9,200",
-      valueColor: "#00ff88",
-      filter: "Received",
-      detail: "Transaction hash: 0x8b3f...c91a · Block #18,294,021 · Gas: 0.002 ETH",
-    },
-    {
-      id: "swap-usdc-eth",
-      icon: "🔄",
-      iconBg: "rgba(139,92,246,0.15)",
-      label: "Swapped 500 USDC → 0.15 ETH",
-      sub: "Uniswap",
-      value: "$500",
-      filter: "Swaps",
-      detail: "Rate: 1 ETH = 3,333 USDC · Slippage: 0.3% · Pool fee: 0.05%",
-    },
-    {
-      id: "scam-claim",
-      icon: "⚠️",
-      iconBg: "rgba(255,140,0,0.15)",
-      label: "Unknown token received: CLAIM NOW",
-      labelColor: "#ff8c00",
-      sub: "From unknown",
-      subColor: "#ff8c00",
-      value: "🔔",
-      isSuspicious: true,
-      scamType: "phishing",
-      filter: "Alerts",
-    },
-    {
-      id: "staking-reward",
-      icon: "✓",
-      iconBg: "#00ff8833",
-      label: "Staking reward",
-      sub: "Lido · 3h ago",
-      value: "+$23.40",
-      valueColor: "#00ff88",
-      filter: "Received",
-      detail: "Validator: Lido DAO · APR: 4.2% · Accumulated over 7 days",
-    },
-    {
-      id: "sent-eth",
-      icon: "📤",
-      iconBg: "#ff336633",
-      label: "Sent 0.1 ETH",
-      sub: "To 0x3a1...f2c",
-      value: "-$287",
-      valueColor: "#ff3366",
-      filter: "Sent",
-      detail: "Transaction hash: 0x2d7e...f30b · Block #18,293,844 · Gas: 0.001 ETH",
-    },
-    {
-      id: "scam-airdrop",
-      icon: "🎁",
-      iconBg: "rgba(255,215,0,0.15)",
-      label: "Airdrop: 10,000 FREE tokens",
-      labelColor: "#ffd700",
-      sub: "Tap to claim",
-      subColor: "#ffd700",
-      value: "⚠️",
-      isSuspicious: true,
-      scamType: "fake-airdrop",
-      filter: "Alerts",
-    },
-    {
-      id: "swap-eth-usdc",
-      icon: "🔄",
-      iconBg: "rgba(139,92,246,0.15)",
-      label: "Swapped 0.5 ETH → 1,437 USDC",
-      sub: "SushiSwap",
-      value: "$1,437",
-      filter: "Swaps",
-      detail: "Rate: 1 ETH = 2,874 USDC · Slippage: 0.5% · Pool fee: 0.3%",
-    },
-    {
-      id: "recv-usdc",
-      icon: "📥",
-      iconBg: "#00ff8833",
-      label: "Received 500 USDC",
-      sub: "From 0x9c4...b7e",
-      value: "$500",
-      valueColor: "#00ff88",
-      filter: "Received",
-      detail: "Transaction hash: 0x5a1c...e82d · Block #18,293,501 · Confirmed",
-    },
-    {
-      id: "scam-dust",
-      icon: "💀",
-      iconBg: "rgba(255,140,0,0.15)",
-      label: "Dust attack: 0.00001 ETH",
-      labelColor: "#ff8c00",
-      sub: "Unknown sender",
-      subColor: "#ff8c00",
-      value: "🔔",
-      isSuspicious: true,
-      scamType: "impersonation",
-      filter: "Alerts",
-    },
-    {
-      id: "sent-usdc",
-      icon: "📤",
-      iconBg: "#ff336633",
-      label: "Sent 200 USDC",
-      sub: "To 0x5b8...c1d",
-      value: "-$200",
-      valueColor: "#ff3366",
-      filter: "Sent",
-      detail: "Transaction hash: 0x7f3b...a92c · Block #18,292,999 · Gas: 0.0008 ETH",
-    },
-    {
-      id: "swap-moon",
-      icon: "🔄",
-      iconBg: "rgba(139,92,246,0.15)",
-      label: "Swapped 200 USDC → 25,000 MOON",
-      sub: "PancakeSwap",
-      value: "$200",
-      filter: "Swaps",
-      detail: "Rate: 1 MOON = 0.008 USDC · High volatility token · DEX trade",
-    },
-    {
-      id: "recv-moon",
-      icon: "📥",
-      iconBg: "#00ff8833",
-      label: "Received 50,000 MOON",
-      sub: "From 0x1d2...e5f",
-      value: "$420",
-      valueColor: "#00ff88",
-      filter: "Received",
-      detail: "Transaction hash: 0xab2f...d71e · Block #18,292,501 · Unverified token",
-    },
-    {
-      id: "staking-lido",
-      icon: "🏦",
-      iconBg: "rgba(0,212,255,0.15)",
-      label: "Staked 1.0 ETH",
-      sub: "Lido Finance",
-      value: "$2,875",
-      filter: "Sent",
-      detail: "Staking provider: Lido · Expected APR: 4.2% · Lock period: None",
-    },
-    {
-      id: "recv-nft",
-      icon: "📥",
-      iconBg: "#00ff8833",
-      label: "Received NFT: CryptoPunk #4281",
-      sub: "From 0x8e3...a2b",
-      value: "$12,400",
-      valueColor: "#00ff88",
-      filter: "Received",
-      detail: "Collection: CryptoPunks · Token ID: 4281 · ERC-721",
-    },
-  ],
-  totalValue: 47832.15,
-  dailyChange: 1204.3,
-  dailyChangePct: 2.58,
-  hp: 80,
-  maxHp: 100,
-  streak: 13,
+  ];
+}
 
-  takeDamage: (amount) => {
-    const { hp } = get();
-    set({ hp: Math.max(0, hp - amount) });
-  },
+// ── Class Modifiers ─────────────────────────────────────────────────────────────
 
-  subtractValue: (amount) => {
-    const { totalValue } = get();
-    set({ totalValue: Math.max(0, totalValue - amount) });
-  },
+function applyClassModifiers(holdings: Token[], playerClass: string): Token[] {
+  switch (playerClass) {
+    case "ape":
+      // +20% starting value — boost all amounts by 20%
+      return holdings.map((t) => ({ ...t, amount: round2(t.amount * 1.2) }));
 
-  incrementStreak: () => {
-    const { streak } = get();
-    set({ streak: streak + 1 });
-  },
-}));
+    case "analyst":
+      // Same value, +1 extra diversified holding
+      return [
+        ...holdings,
+        {
+          id: "link",
+          name: "Chainlink",
+          symbol: "LINK",
+          emoji: "\u26D3",
+          iconColor: "#375bd2",
+          amount: 50,
+          pricePerUnit: 15,
+          dailyChangePct: 1.8,
+          riskLevel: "low",
+          scamExposure: "low",
+          isScamToken: false,
+          isSuspicious: false,
+        },
+      ];
+
+    case "shadow": {
+      // All in stablecoins — convert everything to USDC
+      const total = computeTotalValue(holdings);
+      return [
+        {
+          id: "usdc",
+          name: "USDC",
+          symbol: "USDC",
+          emoji: "$",
+          iconColor: "#2775ca",
+          amount: round2(total),
+          pricePerUnit: 1.0,
+          dailyChangePct: 0,
+          riskLevel: "low",
+          scamExposure: "low",
+          isScamToken: false,
+          isSuspicious: false,
+        },
+      ];
+    }
+
+    case "degen": {
+      // Random allocation + 1 already-suspicious token
+      const shuffled = holdings.map((t) => ({
+        ...t,
+        amount: round2(t.amount * randomBetween(0.5, 1.5)),
+      }));
+      return [
+        ...shuffled,
+        {
+          id: "safemoon-v3",
+          name: "SafeMoon V3",
+          symbol: "SFM",
+          emoji: "\uD83D\uDE80",
+          iconColor: "#00d4aa",
+          amount: 25000,
+          pricePerUnit: 0.002,
+          dailyChangePct: 45.0,
+          riskLevel: "high",
+          scamExposure: "very-high",
+          isScamToken: false,
+          isSuspicious: true,
+        },
+      ];
+    }
+
+    default:
+      return holdings;
+  }
+}
+
+// ── Initial State ───────────────────────────────────────────────────────────────
+
+const INITIAL_STATE: PortfolioState = {
+  holdings: [],
+  totalValue: 0,
+  dailyChange: 0,
+  dailyChangePct: 0,
+  activeInvestments: [],
+  transactions: [],
+  portfolioHistory: [],
+  allTimeHigh: 0,
+  totalEarned: 0,
+  totalLost: 0,
+};
+
+// ── Store ───────────────────────────────────────────────────────────────────────
+
+export const usePortfolioStore = create<PortfolioState & PortfolioActions>()(
+  persist(
+    (set, get) => ({
+      ...INITIAL_STATE,
+
+      // ── Portfolio Management ─────────────────────────────────────────────
+
+      initializePortfolio: (playerClass) => {
+        const base = makeBaseHoldings();
+        const holdings = applyClassModifiers(base, playerClass);
+        const totalValue = computeTotalValue(holdings);
+
+        set({
+          holdings,
+          totalValue,
+          dailyChange: 0,
+          dailyChangePct: 0,
+          activeInvestments: [],
+          transactions: [],
+          portfolioHistory: [totalValue],
+          allTimeHigh: totalValue,
+          totalEarned: 0,
+          totalLost: 0,
+        });
+      },
+
+      recalculateTotals: () => {
+        set((s) => {
+          const newTotal = computeTotalValue(s.holdings);
+          const lastSnapshot =
+            s.portfolioHistory[s.portfolioHistory.length - 1] ?? newTotal;
+          const change = round2(newTotal - lastSnapshot);
+          const changePct =
+            lastSnapshot > 0 ? round2((change / lastSnapshot) * 100) : 0;
+
+          return {
+            totalValue: newTotal,
+            dailyChange: change,
+            dailyChangePct: changePct,
+            allTimeHigh: Math.max(s.allTimeHigh, newTotal),
+          };
+        });
+      },
+
+      addHolding: (token) => {
+        set((s) => {
+          const existing = s.holdings.find((h) => h.id === token.id);
+          if (existing) {
+            return {
+              holdings: s.holdings.map((h) =>
+                h.id === token.id
+                  ? { ...h, amount: round2(h.amount + token.amount) }
+                  : h,
+              ),
+            };
+          }
+          return { holdings: [...s.holdings, token] };
+        });
+        get().recalculateTotals();
+      },
+
+      removeHolding: (tokenId) => {
+        set((s) => ({
+          holdings: s.holdings.filter((h) => h.id !== tokenId),
+        }));
+        get().recalculateTotals();
+      },
+
+      updateTokenPrice: (tokenId, newPrice, changePct) => {
+        set((s) => ({
+          holdings: s.holdings.map((h) =>
+            h.id === tokenId
+              ? { ...h, pricePerUnit: newPrice, dailyChangePct: changePct }
+              : h,
+          ),
+        }));
+        get().recalculateTotals();
+      },
+
+      // ── Transactions ────────────────────────────────────────────────────
+
+      addTransaction: (tx) => {
+        const newTx: Transaction = {
+          ...tx,
+          id: generateId(),
+          timestamp: nowISO(),
+        };
+        set((s) => ({ transactions: [newTx, ...s.transactions] }));
+      },
+
+      getRecentTransactions: (count) => {
+        return get().transactions.slice(0, count);
+      },
+
+      getSuspiciousTransactions: () => {
+        return get().transactions.filter((tx) => tx.isSuspicious);
+      },
+
+      // ── Investments ─────────────────────────────────────────────────────
+
+      createInvestment: (investment) => {
+        const newInv: Investment = {
+          ...investment,
+          id: generateId(),
+          daysActive: 0,
+        };
+        set((s) => ({
+          activeInvestments: [...s.activeInvestments, newInv],
+        }));
+      },
+
+      processInvestmentReturns: () => {
+        const { activeInvestments } = get();
+        let totalReturn = 0;
+
+        const updated = activeInvestments.map((inv) => {
+          if (!inv.isActive) return inv;
+
+          const dailyReturn = round2(
+            inv.amountInvested * (inv.dailyReturnPct / 100),
+          );
+          totalReturn += dailyReturn;
+
+          return { ...inv, daysActive: inv.daysActive + 1 };
+        });
+
+        set({ activeInvestments: updated });
+
+        if (totalReturn > 0) {
+          get().addFunds(totalReturn, "investment-returns");
+          get().addTransaction({
+            type: "investment-return",
+            label: "Investment Returns",
+            sublabel: `Daily yield from ${updated.filter((i) => i.isActive).length} active investments`,
+            amount: totalReturn,
+            isSuspicious: false,
+          });
+        }
+      },
+
+      checkRugPulls: () => {
+        const { activeInvestments } = get();
+        const rugPulled: Investment[] = [];
+
+        const updated = activeInvestments.map((inv) => {
+          if (
+            inv.rugPullDay != null &&
+            inv.daysActive >= inv.rugPullDay &&
+            inv.isActive
+          ) {
+            rugPulled.push(inv);
+            get().drainFunds(inv.amountInvested, `Rug pull: ${inv.name}`);
+            get().addTransaction({
+              type: "rekt-loss",
+              label: `RUG PULL: ${inv.name}`,
+              sublabel: "Investment drained \u2014 liquidity removed",
+              amount: -inv.amountInvested,
+              isSuspicious: true,
+            });
+            return { ...inv, isActive: false };
+          }
+          return inv;
+        });
+
+        set({ activeInvestments: updated });
+        return rugPulled;
+      },
+
+      removeInvestment: (investmentId) => {
+        set((s) => ({
+          activeInvestments: s.activeInvestments.filter(
+            (i) => i.id !== investmentId,
+          ),
+        }));
+      },
+
+      // ── Economy ─────────────────────────────────────────────────────────
+
+      addFunds: (amount, _source) => {
+        set((s) => {
+          if (s.holdings.length === 0) return s;
+
+          // Add to USDC if it exists, otherwise first holding
+          const usdcIdx = s.holdings.findIndex((h) => h.symbol === "USDC");
+          const targetIdx = usdcIdx >= 0 ? usdcIdx : 0;
+
+          const holdings = s.holdings.map((h, i) => {
+            if (i !== targetIdx) return h;
+            // For USDC (price=1) add amount directly; otherwise convert to token units
+            const units =
+              h.pricePerUnit > 0 ? amount / h.pricePerUnit : amount;
+            return { ...h, amount: round2(h.amount + units) };
+          });
+
+          const newTotal = computeTotalValue(holdings);
+          return {
+            holdings,
+            totalValue: newTotal,
+            totalEarned: round2(s.totalEarned + amount),
+            allTimeHigh: Math.max(s.allTimeHigh, newTotal),
+          };
+        });
+      },
+
+      drainFunds: (amount, _reason) => {
+        set((s) => {
+          let remaining = amount;
+
+          // Sort indices by holding value descending — drain from largest first
+          const indices = s.holdings
+            .map((h, i) => ({ value: h.amount * h.pricePerUnit, idx: i }))
+            .sort((a, b) => b.value - a.value);
+
+          const holdings = [...s.holdings];
+
+          for (const { idx } of indices) {
+            if (remaining <= 0) break;
+
+            const h = holdings[idx];
+            const holdingValue = h.amount * h.pricePerUnit;
+            const drain = Math.min(remaining, holdingValue);
+            const unitsToRemove =
+              h.pricePerUnit > 0 ? drain / h.pricePerUnit : h.amount;
+
+            holdings[idx] = {
+              ...h,
+              amount: round2(Math.max(0, h.amount - unitsToRemove)),
+            };
+            remaining = round2(remaining - drain);
+          }
+
+          // Remove empty holdings
+          const filtered = holdings.filter((h) => h.amount > 0);
+          const newTotal = computeTotalValue(filtered);
+
+          return {
+            holdings: filtered,
+            totalValue: newTotal,
+            totalLost: round2(s.totalLost + (amount - remaining)),
+          };
+        });
+      },
+
+      getPortfolioGrowthRate: () => {
+        const { portfolioHistory } = get();
+        if (portfolioHistory.length < 2) return 0;
+        const recent = portfolioHistory[portfolioHistory.length - 1];
+        const previous = portfolioHistory[portfolioHistory.length - 2];
+        if (previous === 0) return 0;
+        return round2(((recent - previous) / previous) * 100);
+      },
+
+      // ── Daily Simulation ────────────────────────────────────────────────
+
+      simulateMarketDay: () => {
+        set((s) => {
+          const holdings = s.holdings.map((token) => {
+            let minSwing: number;
+            let maxSwing: number;
+
+            if (token.symbol === "USDC" || token.symbol === "USDT") {
+              // Stablecoin: ±0.1%
+              minSwing = -0.1;
+              maxSwing = 0.1;
+            } else if (token.isScamToken) {
+              // Scam tokens always trend up to bait players
+              minSwing = 5;
+              maxSwing = 25;
+            } else if (token.riskLevel === "high" || token.isSuspicious) {
+              // Risky tokens: ±20%
+              minSwing = -20;
+              maxSwing = 20;
+            } else if (token.symbol === "ETH") {
+              // ETH: ±5%
+              minSwing = -5;
+              maxSwing = 5;
+            } else if (token.riskLevel === "medium") {
+              // Medium risk: ±10%
+              minSwing = -10;
+              maxSwing = 10;
+            } else {
+              // Low risk default: ±3%
+              minSwing = -3;
+              maxSwing = 3;
+            }
+
+            const changePct = round2(randomBetween(minSwing, maxSwing));
+            const newPrice = Math.max(
+              0.0001,
+              round2(token.pricePerUnit * (1 + changePct / 100)),
+            );
+
+            return { ...token, pricePerUnit: newPrice, dailyChangePct: changePct };
+          });
+
+          const newTotal = computeTotalValue(holdings);
+          const prevTotal = s.totalValue;
+          const change = round2(newTotal - prevTotal);
+          const changePct =
+            prevTotal > 0 ? round2((change / prevTotal) * 100) : 0;
+
+          return {
+            holdings,
+            totalValue: newTotal,
+            dailyChange: change,
+            dailyChangePct: changePct,
+            allTimeHigh: Math.max(s.allTimeHigh, newTotal),
+          };
+        });
+      },
+
+      // ── Scam Injection ──────────────────────────────────────────────────
+
+      injectScamToken: (token) => {
+        set((s) => ({ holdings: [...s.holdings, token] }));
+        get().addTransaction({
+          type: "dust-attack",
+          label: `Received ${token.symbol}`,
+          sublabel: "Unknown sender \u2014 do not interact",
+          amount: round2(token.amount * token.pricePerUnit),
+          isSuspicious: true,
+        });
+        get().recalculateTotals();
+      },
+
+      injectScamTransaction: (tx) => {
+        get().addTransaction({ ...tx, isSuspicious: true });
+      },
+
+      // ── Snapshots ───────────────────────────────────────────────────────
+
+      takeSnapshot: () => {
+        set((s) => ({
+          portfolioHistory: [...s.portfolioHistory, s.totalValue],
+        }));
+      },
+
+      getChartData: (days) => {
+        const { portfolioHistory } = get();
+        return portfolioHistory.slice(-days);
+      },
+
+      // ── Reset ───────────────────────────────────────────────────────────
+
+      resetPortfolio: () => set({ ...INITIAL_STATE }),
+    }),
+    {
+      name: "rekt-portfolio-storage",
+      storage: createJSONStorage(() =>
+        Platform.OS === "web" ? localStorage : AsyncStorage,
+      ),
+    },
+  ),
+);
