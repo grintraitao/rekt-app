@@ -33,7 +33,7 @@ export default function SurvivedScreen() {
   const savedNum = parseInt(amountSaved, 10) || 47832;
   const streak = usePortfolioStore((s) => s.streak);
   const incrementStreak = usePortfolioStore((s) => s.incrementStreak);
-  const addXp = usePlayerStore((s) => s.addXp);
+  const addXp = usePlayerStore((s) => s.addXP);
   const addSecurityTokens = usePlayerStore((s) => s.addSecurityTokens);
   const completeScenario = usePlayerStore((s) => s.completeScenario);
   const recordSurvive = usePlayerStore((s) => s.recordSurvive);

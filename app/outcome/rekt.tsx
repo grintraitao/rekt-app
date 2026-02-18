@@ -29,7 +29,7 @@ export default function RektScreen() {
   const streak = usePortfolioStore((s) => s.streak);
   const takeDamage = usePortfolioStore((s) => s.takeDamage);
   const subtractValue = usePortfolioStore((s) => s.subtractValue);
-  const resetStreak = usePlayerStore((s) => s.resetStreak);
+  const resetStreak = usePlayerStore((s) => s.breakStreak);
   const recordRekt = usePlayerStore((s) => s.recordRekt);
 
   // ── Shake animation ──────────────────────────────────────────────────

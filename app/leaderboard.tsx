@@ -110,7 +110,7 @@ export default function LeaderboardScreen() {
   const xp = usePlayerStore((s) => s.xp);
   const survived = usePlayerStore((s) => s.survived);
   const rektCount = usePlayerStore((s) => s.rektCount);
-  const selectedClass = usePlayerStore((s) => s.selectedClass);
+  const selectedClass = usePlayerStore((s) => s.playerClass);
 
   const playerLevel = getLevel(xp);
   const total = survived + rektCount;
@@ -127,7 +127,7 @@ export default function LeaderboardScreen() {
   const playerEntry: LeaderboardEntry = {
     rank: 8,
     name: username,
-    avatar: CLASS_AVATAR[selectedClass] ?? "🐵",
+    avatar: CLASS_AVATAR[selectedClass ?? "ape"] ?? "🐵",
     level: playerLevel,
     survivalRate,
     xp: xp || 4340, // fallback for demo

@@ -22,7 +22,7 @@ import { usePortfolioStore } from "../src/store/portfolioStore";
 
 export default function DailyRewardScreen() {
   const router = useRouter();
-  const { streak, claimDailyReward, addXp } = usePlayerStore();
+  const { streak, claimDailyReward, addXP: addXp } = usePlayerStore();
   const totalValue = usePortfolioStore((s) => s.totalValue);
   const [claimed, setClaimed] = useState(false);
 

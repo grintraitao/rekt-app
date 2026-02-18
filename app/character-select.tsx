@@ -71,11 +71,11 @@ const classes: ClassOption[] = [
 
 export default function CharacterSelectScreen() {
   const router = useRouter();
-  const selectedClass = usePlayerStore((s) => s.selectedClass);
-  const setClass = usePlayerStore((s) => s.setClass);
-  const setOnboarded = usePlayerStore((s) => s.setOnboarded);
+  const selectedClass = usePlayerStore((s) => s.playerClass);
+  const setClass = usePlayerStore((s) => s.selectClass);
+  const setOnboarded = usePlayerStore((s) => s.completeOnboarding);
 
-  const selectedName = classes.find((c) => c.id === selectedClass)?.name ?? "";
+  const selectedName = classes.find((c) => c.id === (selectedClass ?? "ape"))?.name ?? "";
 
   const handleConfirm = () => {
     setOnboarded();

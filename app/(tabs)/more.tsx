@@ -143,18 +143,7 @@ export default function MoreScreen() {
 
   function resetAllStores() {
     // Reset player store
-    usePlayerStore.setState({
-      selectedClass: "ape",
-      username: "Player_001",
-      hasOnboarded: false,
-      xp: 0,
-      securityTokens: 0,
-      completedScenarios: [],
-      survived: 0,
-      rektCount: 0,
-      streak: 0,
-      lastClaimDate: "",
-    });
+    usePlayerStore.getState().resetAll();
 
     // Reset portfolio store
     usePortfolioStore.setState({

@@ -51,7 +51,7 @@ function StatBar({
 export default function StatsScreen() {
   const router = useRouter();
 
-  const selectedClass = usePlayerStore((s) => s.selectedClass);
+  const selectedClass = usePlayerStore((s) => s.playerClass);
   const username = usePlayerStore((s) => s.username);
   const xp = usePlayerStore((s) => s.xp);
   const streak = usePlayerStore((s) => s.streak);
@@ -60,7 +60,7 @@ export default function StatsScreen() {
   const securityTokens = usePlayerStore((s) => s.securityTokens);
   const hp = usePortfolioStore((s) => s.hp);
 
-  const classMeta = CLASS_META[selectedClass];
+  const classMeta = CLASS_META[selectedClass ?? "ape"];
   const lvl = getLevelProgress(xp);
   const total = survived + rektCount;
   const rate = total > 0 ? Math.round((survived / total) * 100) : 0;
