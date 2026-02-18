@@ -42,6 +42,21 @@ FINAL POLISH:
 4. **Always say**: "Reference docs/REKT-Final-Build-Plan.md Screen Flow section"
 5. **Don't skip Prompt 10** — the integration test catches everything
 
+### ⚠️ KNOWN CODE ↔ DOC ALIGNMENT NOTES (read before starting)
+
+Several Phase 4 implementations differ from the pseudocode in the prompts below.
+When you encounter these, **use the actual code** — the prompts show intent, not exact API:
+
+| What the prompt says | What the code actually has | What to do |
+|---|---|---|
+| `processGameAction('scenario-complete')` (no extra args) | `processGameAction(action, stores)` requires a full `stores` object — see `src/engine/AchievementEngine.ts` | Pass the stores object |
+| `playerStore.getState().useDiamondHands()` | No such method exists. Field is `diamondHandsUsed: boolean` | Add `useDiamondHands` action to playerStore first |
+| `gameState.npcDialoguesShown` / `markNPCDialogueShown()` | gameStore has no such field or action | Add `npcDialoguesShown: string[]` field + `markNPCDialogueShown(id)` action to gameStore |
+| `game.lastScamTime` | gameStore has no `lastScamTime` field | Add `lastScamTime: string \| null` field to gameStore |
+| `gameStore.initializeChapters()` | Chapters auto-init in `INITIAL_STATE` — no such method | Skip this call; chapters are already initialized |
+| Notification `linkedScenarioId` | `notificationStore` uses `AppNotification` type (no `linkedScenarioId`). `ScamDeliveryEngine` uses separate `DeliveryNotification` type that has it. | Migrate `notificationStore` to use `DeliveryNotification` type, or add `linkedScenarioId?` to `AppNotification` |
+| `EconomyEngine.calculateDailyReward()` (no args) | Requires `(holdings, streak, playerLevel, playerClass)` | Pass all 4 arguments |
+
 ---
 
 ## PROMPT 1 — App Entry Flow
@@ -67,13 +82,13 @@ FLOW LOGIC:
      - Player taps "Confirm" →
        a) playerStore.completeOnboarding()
        b) portfolioStore.initializePortfolio(selectedClass)
-       c) gameStore.initializeChapters()  // set up chapter data
+       c) // chapters are auto-initialized in gameStore INITIAL_STATE — no call needed
        d) Navigate to Daily Reward (20)
    → Daily Reward (20):
      - Show first-day rewards (no streak yet)
      - Player taps "Claim" →
        a) playerStore.claimDailyReward()
-       b) EconomyEngine.calculateDailyReward() applied
+       b) EconomyEngine.calculateDailyReward(holdings, streak, playerLevel, playerClass) applied
        c) gameStore.advanceGameDay()
        d) Navigate to Wallet Home (03)
 
@@ -144,6 +159,12 @@ Create src/flows/ScamEncounterFlow.ts — a flow controller that
 orchestrates the entire scam encounter sequence.
 
 ENTRY POINTS (3 ways a scam encounter starts):
+
+  NOTE: notificationStore currently uses AppNotification type which has scamType
+  but NO linkedScenarioId. The ScamDeliveryEngine generates DeliveryNotification
+  (a separate type) which HAS linkedScenarioId. You must either:
+    a) Add linkedScenarioId?: string to the AppNotification type, OR
+    b) Migrate notificationStore to use DeliveryNotification from ScamDeliveryEngine
 
   A) From Notifications screen (05):
      Player taps a scam notification that has linkedScenarioId
@@ -363,8 +384,11 @@ class OutcomeProcessor {
     moneyLost = gearMitigation.finalDamage
     
     // 3. Check Ape's Diamond Hands ability (one-time rug pull survival)
-    if (player.playerClass === 'ape' && 
-        scenario.category === 'rug-pull' && 
+    //    NOTE: playerStore has diamondHandsUsed field but NO useDiamondHands() action.
+    //    You must ADD this action to playerStore first:
+    //      useDiamondHands: () => set({ diamondHandsUsed: true })
+    if (player.playerClass === 'ape' &&
+        scenario.category === 'rug-pull' &&
         !player.diamondHandsUsed) {
       // Diamond Hands activates! Reduce loss to 25%
       moneyLost = moneyLost * 0.25
@@ -410,8 +434,22 @@ class OutcomeProcessor {
     })
     
     // 10. Check achievements (yes, even after rekt — "First REKT" achievement)
+    //     NOTE: processGameAction requires a stores object — see AchievementEngine.ts
     const { processGameAction } = await import('../engine/AchievementEngine')
-    await processGameAction('scenario-complete')
+    processGameAction('scenario-complete', {
+      achievements: gameStore.getState().achievements,
+      player: { level: player.level, streak: player.streak, survived: player.survived,
+                completedScenarios: player.completedScenarios, unlockedGear: player.unlockedGear },
+      portfolio: { totalValue: portfolioStore.getState().totalValue },
+      game: { completedScenarios: gameStore.getState().completedScenarios,
+              scenarioResults: gameStore.getState().scenarioResults,
+              chapters: gameStore.getState().chapters },
+      streak: player.streak,
+      milestones: gameStore.getState().streakMilestones,
+      playerActions: { addXP: player.addXP, addCoins: player.addCoins,
+                       addSecurityTokens: player.addSecurityTokens, unlockGear: player.unlockGear },
+      unlockAchievement: gameStore.getState().unlockAchievement,
+    })
     
     // 11. Check game over
     const isGameOver = playerStore.getState().stats.hp <= 0
@@ -521,8 +559,22 @@ class OutcomeProcessor {
     })
     
     // 10. Check achievements
+    //     NOTE: processGameAction requires a stores object — see AchievementEngine.ts
     const { processGameAction } = await import('../engine/AchievementEngine')
-    const newAchievements = await processGameAction('scenario-complete')
+    const { newAchievements } = processGameAction('scenario-complete', {
+      achievements: gameStore.getState().achievements,
+      player: { level: player.level, streak: player.streak, survived: player.survived,
+                completedScenarios: player.completedScenarios, unlockedGear: player.unlockedGear },
+      portfolio: { totalValue: portfolioStore.getState().totalValue },
+      game: { completedScenarios: gameStore.getState().completedScenarios,
+              scenarioResults: gameStore.getState().scenarioResults,
+              chapters: gameStore.getState().chapters },
+      streak: player.streak,
+      milestones: gameStore.getState().streakMilestones,
+      playerActions: { addXP: player.addXP, addCoins: player.addCoins,
+                       addSecurityTokens: player.addSecurityTokens, unlockGear: player.unlockGear },
+      unlockAchievement: gameStore.getState().unlockAchievement,
+    })
     
     // 11. Calculate "safer than X% of players"
     const saferThanPct = 100 - scenario.communityRektRate
@@ -1049,6 +1101,9 @@ class DailySimulation {
     
     // === 4. SCAM INJECTION ===
     // Decide if new scam content should appear today
+    //   NOTE: gameStore has NO lastScamTime field. You must ADD it:
+    //     lastScamTime: string | null  (in GameState)
+    //     setLastScamTime: (time: string) => void  (action)
     let newScamInjected = false
     const shouldInject = ScamDeliveryEngine.shouldTriggerScam(
       game.lastScamTime || '',
@@ -1118,8 +1173,9 @@ class DailySimulation {
     gameStore.getState().advanceGameDay()
     
     // === 11. CHECK ACHIEVEMENTS ===
+    //     NOTE: processGameAction requires stores object — see AchievementEngine.ts
     const { processGameAction } = await import('../engine/AchievementEngine')
-    await processGameAction('daily-claim')
+    processGameAction('daily-claim', { /* pass full stores object */ })
     
     return {
       marketChanges: generateMarketSummary(marketResult),
@@ -1140,16 +1196,21 @@ function generateMarketSummary(result): string[] {
 }
 
 // Helper: check if any NPC should speak today
+//   NOTE: gameStore has NO npcDialoguesShown field. You must ADD it:
+//     npcDialoguesShown: string[]  (in GameState, default [])
+//     markNPCDialogueShown: (id: string) => void  (action)
 function checkNPCTriggers(game, player): string | null {
+  const shown = game.npcDialoguesShown ?? []
   // Sensei speaks after first survival
-  if (game.completedScenarios.length === 1) return 'sensei-intro'
+  if (game.completedScenarios.length === 1 && !shown.includes('sensei-intro'))
+    return 'sensei-intro'
   // Sensei speaks after first rekt
-  if (Object.values(game.scenarioResults).some(r => r.outcome === 'rekt') 
-      && !game.npcDialoguesShown?.includes('sensei-after-rekt'))
+  if (Object.values(game.scenarioResults).some(r => r.outcome === 'rekt')
+      && !shown.includes('sensei-after-rekt'))
     return 'sensei-after-rekt'
   // Rick appears in Chapter 1 after scenario 3
-  if (game.completedScenarios.length >= 3 
-      && !game.npcDialoguesShown?.includes('rick-intro'))
+  if (game.completedScenarios.length >= 3
+      && !shown.includes('rick-intro'))
     return 'rick-intro'
   return null
 }
@@ -1328,8 +1389,27 @@ Create an NPCDialogueModal component that:
 - Mark dialogue as shown via NPCTriggerEngine.markShown()
 - Apply any reputation changes
 
-Add npcDialoguesShown: string[] to gameStore.
-Add markNPCDialogueShown(id: string) action to gameStore.
+Add npcDialoguesShown: string[] to gameStore (field does NOT exist yet — must be created).
+Add markNPCDialogueShown(id: string) action to gameStore (does NOT exist yet — must be created).
+
+PREREQUISITE: Before starting Prompt 9, add these to gameStore.ts:
+  - In GameState interface:  npcDialoguesShown: string[]
+  - In INITIAL_STATE:        npcDialoguesShown: []
+  - In GameActions interface: markNPCDialogueShown: (id: string) => void
+  - In store actions:
+      markNPCDialogueShown: (id) => set((s) => ({
+        npcDialoguesShown: [...(s.npcDialoguesShown || []), id],
+      })),
+
+Also add to gameStore.ts (needed by Prompt 8):
+  - In GameState interface:  lastScamTime: string | null
+  - In INITIAL_STATE:        lastScamTime: null
+  - In GameActions interface: setLastScamTime: (time: string) => void
+  - In store actions:         setLastScamTime: (time) => set({ lastScamTime: time })
+
+Also add to playerStore.ts (needed by Prompt 3):
+  - In PlayerActions interface: useDiamondHands: () => void
+  - In store actions:           useDiamondHands: () => set({ diamondHandsUsed: true })
 ```
 
 ### After:

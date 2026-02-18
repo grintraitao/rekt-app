@@ -12,6 +12,11 @@
 
 import type { ScenarioDefinition } from "../../store/scenarioStore";
 
+// Stub loader for scenarios whose JSON files haven't been created yet.
+// Returns a rejected promise so callers know the data is unavailable.
+const notYetCreated = (id: string) => (): Promise<ScenarioDefinition> =>
+  Promise.reject(new Error(`Scenario "${id}" JSON not yet created`));
+
 // Each entry is a lazy loader that returns the scenario JSON module.
 // The `then(m => m.default)` normalises both `import()` styles.
 export const SCENARIO_REGISTRY: Record<
@@ -30,53 +35,33 @@ export const SCENARIO_REGISTRY: Record<
   "ch1-seed-phrase-trap": () =>
     import("./ch1-seed-phrase-trap.json").then((m) => m.default as unknown as ScenarioDefinition),
 
-  // ── Chapter 2: DEX District ─────────────────────────────────────────────────
-  "ch2-fake-dex": () =>
-    import("./ch2-fake-dex.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch2-honeypot-token": () =>
-    import("./ch2-honeypot-token.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch2-unlimited-approval": () =>
-    import("./ch2-unlimited-approval.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch2-fake-swap": () =>
-    import("./ch2-fake-swap.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch2-rug-pull": () =>
-    import("./ch2-rug-pull.json").then((m) => m.default as unknown as ScenarioDefinition),
+  // ── Chapter 2: DEX District (JSON files not yet created) ───────────────────
+  "ch2-fake-dex": notYetCreated("ch2-fake-dex"),
+  "ch2-honeypot-token": notYetCreated("ch2-honeypot-token"),
+  "ch2-unlimited-approval": notYetCreated("ch2-unlimited-approval"),
+  "ch2-fake-swap": notYetCreated("ch2-fake-swap"),
+  "ch2-rug-pull": notYetCreated("ch2-rug-pull"),
 
-  // ── Chapter 3: NFT Bazaar ───────────────────────────────────────────────────
-  "ch3-fake-mint": () =>
-    import("./ch3-fake-mint.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch3-discord-hack": () =>
-    import("./ch3-discord-hack.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch3-counterfeit-nft": () =>
-    import("./ch3-counterfeit-nft.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch3-fake-collab": () =>
-    import("./ch3-fake-collab.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch3-discord-migration": () =>
-    import("./ch3-discord-migration.json").then((m) => m.default as unknown as ScenarioDefinition),
+  // ── Chapter 3: NFT Bazaar (JSON files not yet created) ─────────────────────
+  "ch3-fake-mint": notYetCreated("ch3-fake-mint"),
+  "ch3-discord-hack": notYetCreated("ch3-discord-hack"),
+  "ch3-counterfeit-nft": notYetCreated("ch3-counterfeit-nft"),
+  "ch3-fake-collab": notYetCreated("ch3-fake-collab"),
+  "ch3-discord-migration": notYetCreated("ch3-discord-migration"),
 
-  // ── Chapter 4: Bridge City ──────────────────────────────────────────────────
-  "ch4-fake-bridge": () =>
-    import("./ch4-fake-bridge.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch4-chain-approval": () =>
-    import("./ch4-chain-approval.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch4-bridge-exploit": () =>
-    import("./ch4-bridge-exploit.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch4-fake-l2": () =>
-    import("./ch4-fake-l2.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch4-bridge-phishing": () =>
-    import("./ch4-bridge-phishing.json").then((m) => m.default as unknown as ScenarioDefinition),
+  // ── Chapter 4: Bridge City (JSON files not yet created) ────────────────────
+  "ch4-fake-bridge": notYetCreated("ch4-fake-bridge"),
+  "ch4-chain-approval": notYetCreated("ch4-chain-approval"),
+  "ch4-bridge-exploit": notYetCreated("ch4-bridge-exploit"),
+  "ch4-fake-l2": notYetCreated("ch4-fake-l2"),
+  "ch4-bridge-phishing": notYetCreated("ch4-bridge-phishing"),
 
-  // ── Chapter 5: The Dark Pool ────────────────────────────────────────────────
-  "ch5-governance-attack": () =>
-    import("./ch5-governance-attack.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch5-social-whale": () =>
-    import("./ch5-social-whale.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch5-mev-trap": () =>
-    import("./ch5-mev-trap.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch5-insider-info": () =>
-    import("./ch5-insider-info.json").then((m) => m.default as unknown as ScenarioDefinition),
-  "ch5-inside-job": () =>
-    import("./ch5-inside-job.json").then((m) => m.default as unknown as ScenarioDefinition),
+  // ── Chapter 5: The Dark Pool (JSON files not yet created) ──────────────────
+  "ch5-governance-attack": notYetCreated("ch5-governance-attack"),
+  "ch5-social-whale": notYetCreated("ch5-social-whale"),
+  "ch5-mev-trap": notYetCreated("ch5-mev-trap"),
+  "ch5-insider-info": notYetCreated("ch5-insider-info"),
+  "ch5-inside-job": notYetCreated("ch5-inside-job"),
 };
 
 /** All known scenario IDs */
