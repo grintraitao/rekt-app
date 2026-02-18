@@ -174,12 +174,18 @@ export default function StatsScreen() {
           </View>
         </View>
 
-        {/* ── View Gear button ───────────────────────────────────────── */}
+        {/* ── View Gear / Leaderboard buttons ─────────────────────────── */}
         <Pressable
           style={styles.gearBtn}
           onPress={() => router.push("/gear" as never)}
         >
           <Text style={styles.gearBtnText}>🎒 View Gear</Text>
+        </Pressable>
+        <Pressable
+          style={styles.gearBtn}
+          onPress={() => router.push("/leaderboard" as never)}
+        >
+          <Text style={styles.gearBtnText}>🏆 Leaderboard</Text>
         </Pressable>
       </ScrollView>
     </View>
