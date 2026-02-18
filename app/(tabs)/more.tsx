@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { colors, spacing, fontSize, fonts, borderRadius, card } from "../../src/theme";
 
 type SettingRowProps = {
@@ -6,11 +7,12 @@ type SettingRowProps = {
   label: string;
   value?: string;
   danger?: boolean;
+  onPress?: () => void;
 };
 
-function SettingRow({ icon, label, value, danger }: SettingRowProps) {
+function SettingRow({ icon, label, value, danger, onPress }: SettingRowProps) {
   return (
-    <Pressable style={styles.settingRow}>
+    <Pressable style={styles.settingRow} onPress={onPress}>
       <View style={styles.settingLeft}>
         <Text style={styles.settingIcon}>{icon}</Text>
         <Text style={styles.settingLabel}>{label}</Text>
@@ -23,6 +25,8 @@ function SettingRow({ icon, label, value, danger }: SettingRowProps) {
 }
 
 export default function MoreScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -49,6 +53,12 @@ export default function MoreScreen() {
         {/* Game */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Game</Text>
+          <SettingRow
+            icon="🔔"
+            label="Live Threats"
+            value="3 new →"
+            onPress={() => router.push("/threats" as never)}
+          />
           <SettingRow icon="🔄" label="Reset Progress" value="Reset →" danger />
         </View>
 

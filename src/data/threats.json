@@ -1,0 +1,38 @@
+[
+  {
+    "id": "threat-1",
+    "severity": "critical",
+    "severityLabel": "🔴 CRITICAL",
+    "time": "3H AGO",
+    "title": "$2.3M drained via approval exploit",
+    "description": "DeFi protocol LendSwap exploited through unlimited token approval vulnerability. Users who approved the contract lost all deposited funds.",
+    "gameConnection": "You trained for this → Chapter 2, Scenario 4",
+    "scenarioType": "approval-scam",
+    "scanAddress": null,
+    "buttons": ["readMore", "replay"]
+  },
+  {
+    "id": "threat-2",
+    "severity": "warning",
+    "severityLabel": "⚠️ WARNING",
+    "time": "8H AGO",
+    "title": "Phishing wave targets MetaMask users",
+    "description": "Fake emails asking users to \"verify\" wallets via spoofed MetaMask site. Over 500 wallets compromised so far.",
+    "gameConnection": "Related → Chapter 1, Boss Fight",
+    "scenarioType": "fake-support-dm",
+    "scanAddress": null,
+    "buttons": ["readMore"]
+  },
+  {
+    "id": "threat-3",
+    "severity": "info",
+    "severityLabel": "ℹ️ ALERT",
+    "time": "1D AGO",
+    "title": "New honeypot token trending on DEX",
+    "description": "$SAFEMOON2 gaining traction but sell function is disabled. Classic honeypot pattern.",
+    "gameConnection": null,
+    "scenarioType": null,
+    "scanAddress": "0x4a2b...9f1c",
+    "buttons": ["scan"]
+  }
+]
