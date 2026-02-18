@@ -30,6 +30,7 @@ export default function RektScreen() {
   const takeDamage = usePortfolioStore((s) => s.takeDamage);
   const subtractValue = usePortfolioStore((s) => s.subtractValue);
   const resetStreak = usePlayerStore((s) => s.resetStreak);
+  const recordRekt = usePlayerStore((s) => s.recordRekt);
 
   // ── Shake animation ──────────────────────────────────────────────────
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -40,6 +41,7 @@ export default function RektScreen() {
     takeDamage(20);
     subtractValue(lostNum);
     resetStreak();
+    recordRekt();
 
     // Entry animations: shake then fade in
     Animated.sequence([
@@ -126,7 +128,14 @@ export default function RektScreen() {
           <Pressable
             style={styles.learnBtn}
             onPress={() => {
-              router.replace(`/education/${scenarioId}` as never);
+              router.replace({
+                pathname: `/education/${scenarioId}`,
+                params: {
+                  outcomeType: "rekt",
+                  amount: amountLost,
+                  detail: attackType,
+                },
+              } as never);
             }}
           >
             <Text style={styles.learnBtnText}>Learn Why →</Text>

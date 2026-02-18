@@ -28,7 +28,17 @@ function difficultyStars(level: number): string {
 
 export default function EducationPostMortem() {
   const router = useRouter();
-  const { scenarioId = "" } = useLocalSearchParams<{ scenarioId: string }>();
+  const {
+    scenarioId = "",
+    outcomeType = "",
+    amount = "",
+    detail = "",
+  } = useLocalSearchParams<{
+    scenarioId: string;
+    outcomeType: string;
+    amount: string;
+    detail: string;
+  }>();
 
   const scenario = SCENARIO_MAP[scenarioId];
   const edu = scenario?.education;
@@ -123,13 +133,34 @@ export default function EducationPostMortem() {
           </>
         )}
 
-        {/* ── Continue button ─────────────────────────────────────────── */}
-        <Pressable
-          style={styles.continueBtn}
-          onPress={() => router.replace("/(tabs)" as never)}
-        >
-          <Text style={styles.continueBtnText}>Got it! Continue →</Text>
-        </Pressable>
+        {/* ── Action buttons ─────────────────────────────────────────── */}
+        <View style={styles.actionButtons}>
+          {outcomeType && amount ? (
+            <Pressable
+              style={styles.shareBtn}
+              onPress={() => {
+                const isRekt = outcomeType === "rekt";
+                router.push({
+                  pathname: "/share-card",
+                  params: {
+                    type: outcomeType,
+                    amount,
+                    detail: detail || edu.title,
+                    stat: isRekt ? "73% fell for this" : "Top 27% safest",
+                  },
+                } as never);
+              }}
+            >
+              <Text style={styles.shareBtnText}>📸 Share Result</Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            style={styles.continueBtn}
+            onPress={() => router.replace("/(tabs)" as never)}
+          >
+            <Text style={styles.continueBtnText}>Back to Wallet →</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -263,13 +294,29 @@ const styles = StyleSheet.create({
     color: colors.green,
   },
 
-  /* Continue button */
+  /* Action buttons */
+  actionButtons: {
+    gap: spacing.sm,
+    marginTop: spacing["2xl"],
+  },
+  shareBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.md + 2,
+    alignItems: "center",
+  },
+  shareBtnText: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.lg,
+    fontWeight: "600",
+    color: colors.text,
+  },
   continueBtn: {
     backgroundColor: colors.green,
     borderRadius: borderRadius.sm,
     paddingVertical: spacing.md + 2,
     alignItems: "center",
-    marginTop: spacing["2xl"],
   },
   continueBtnText: {
     fontFamily: fonts.mono,

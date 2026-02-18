@@ -146,6 +146,7 @@ export default function MoreScreen() {
     usePlayerStore.setState({
       selectedClass: "ape",
       username: "Player_001",
+      hasOnboarded: false,
       xp: 0,
       securityTokens: 0,
       completedScenarios: [],

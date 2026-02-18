@@ -30,6 +30,8 @@ const SCENARIO_MAP: Record<string, typeof fakeSupport> = {
   phishing: fakeSupport,
   "fake-airdrop": fakeSupport, // placeholder — reuse until real data exists
   impersonation: fakeSupport,
+  "fake-support-dm": fakeSupport,
+  honeypot: approvalScam as unknown as typeof fakeSupport, // placeholder
   "approval-scam": approvalScam as unknown as typeof fakeSupport,
 };
 

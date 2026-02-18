@@ -92,11 +92,12 @@ function GearCard({
 
 export default function GearScreen() {
   const router = useRouter();
-  const equippedGear = useGearStore((s) => s.equippedGear());
-  const availableGear = useGearStore((s) => s.availableGear());
   const equippedIds = useGearStore((s) => s.equippedIds);
   const allGear = useGearStore((s) => s.allGear);
   const toggleGear = useGearStore((s) => s.toggleGear);
+
+  const equippedGear = allGear.filter((g) => equippedIds.includes(g.id));
+  const availableGear = allGear.filter((g) => !equippedIds.includes(g.id));
 
   const equippedCount = equippedIds.length;
   const totalCount = allGear.length;

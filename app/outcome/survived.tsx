@@ -36,6 +36,7 @@ export default function SurvivedScreen() {
   const addXp = usePlayerStore((s) => s.addXp);
   const addSecurityTokens = usePlayerStore((s) => s.addSecurityTokens);
   const completeScenario = usePlayerStore((s) => s.completeScenario);
+  const recordSurvive = usePlayerStore((s) => s.recordSurvive);
 
   // ── Pulse / glow animation ───────────────────────────────────────────
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -46,6 +47,7 @@ export default function SurvivedScreen() {
     addXp(XP_REWARD);
     addSecurityTokens(TOKEN_REWARD);
     incrementStreak();
+    recordSurvive();
     if (scenarioId) completeScenario(scenarioId);
 
     // Fade in
@@ -140,7 +142,14 @@ export default function SurvivedScreen() {
           <Pressable
             style={styles.continueBtn}
             onPress={() => {
-              router.replace(`/education/${scenarioId}` as never);
+              router.replace({
+                pathname: `/education/${scenarioId}`,
+                params: {
+                  outcomeType: "survived",
+                  amount: amountSaved,
+                  detail: `Blocked ${blockedAttack}`,
+                },
+              } as never);
             }}
           >
             <Text style={styles.continueBtnText}>Continue →</Text>

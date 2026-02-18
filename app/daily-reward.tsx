@@ -22,7 +22,7 @@ import { usePortfolioStore } from "../src/store/portfolioStore";
 
 export default function DailyRewardScreen() {
   const router = useRouter();
-  const { streak, claimDailyReward } = usePlayerStore();
+  const { streak, claimDailyReward, addXp } = usePlayerStore();
   const totalValue = usePortfolioStore((s) => s.totalValue);
   const [claimed, setClaimed] = useState(false);
 
@@ -52,6 +52,7 @@ export default function DailyRewardScreen() {
   function handleClaim() {
     if (claimed) return;
     claimDailyReward();
+    addXp(loginXP + streakBonus);
     setClaimed(true);
 
     Animated.sequence([

@@ -12,7 +12,9 @@ export type Achievement = {
 type PlayerState = {
   selectedClass: PlayerClass;
   username: string;
+  hasOnboarded: boolean;
   setClass: (cls: PlayerClass) => void;
+  setOnboarded: () => void;
 
   // Daily reward / streak
   streak: number;
@@ -110,7 +112,9 @@ export function getAchievements(state: {
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   selectedClass: "ape",
   username: "ApeKing_VN",
+  hasOnboarded: false,
   setClass: (cls) => set({ selectedClass: cls }),
+  setOnboarded: () => set({ hasOnboarded: true }),
 
   streak: 13,
   lastClaimDate: "",

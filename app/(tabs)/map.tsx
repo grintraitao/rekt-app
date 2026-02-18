@@ -171,11 +171,22 @@ export default function MapScreen() {
     if (status !== "locked") currentChapterNum = ch.num;
   }
 
+  // Map chapter numbers to their first scenario type
+  const CHAPTER_SCENARIO: Record<number, string> = {
+    1: "phishing",
+    2: "approval-scam",
+    3: "honeypot",
+    4: "fake-airdrop",
+    5: "impersonation",
+  };
+
   function handleChapterPress(chapter: Chapter, status: ChapterStatus) {
     if (status === "locked") {
       showToast(`Reach Level ${chapter.unlockLevel} to unlock`);
+      return;
     }
-    // TODO: completed → chapter summary; current → scenario list
+    const scenarioType = CHAPTER_SCENARIO[chapter.num] ?? "phishing";
+    router.push(`/scenario/${scenarioType}` as never);
   }
 
   return (

@@ -166,6 +166,13 @@ export default function ShareCardScreen() {
             {sharing ? "Sharing..." : "📤 Share"}
           </Text>
         </Pressable>
+
+        <Pressable
+          style={[styles.actionBtn, styles.doneBtn]}
+          onPress={() => router.replace("/(tabs)" as never)}
+        >
+          <Text style={styles.doneBtnText}>Done →</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -275,5 +282,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: "600",
     color: colors.bg,
+  },
+  doneBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  doneBtnText: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.lg,
+    fontWeight: "600",
+    color: colors.textMid,
   },
 });

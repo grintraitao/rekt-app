@@ -73,11 +73,13 @@ export default function CharacterSelectScreen() {
   const router = useRouter();
   const selectedClass = usePlayerStore((s) => s.selectedClass);
   const setClass = usePlayerStore((s) => s.setClass);
+  const setOnboarded = usePlayerStore((s) => s.setOnboarded);
 
   const selectedName = classes.find((c) => c.id === selectedClass)?.name ?? "";
 
   const handleConfirm = () => {
-    router.replace("/(tabs)");
+    setOnboarded();
+    router.replace("/daily-reward");
   };
 
   return (
