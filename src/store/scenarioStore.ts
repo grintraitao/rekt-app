@@ -1,178 +1,552 @@
 import { create } from "zustand";
+import { usePlayerStore } from "./playerStore";
+import { usePortfolioStore } from "./portfolioStore";
 
-/* ── Scenario data types ───────────────────────────────────────────────────── */
+// ── Type Definitions ────────────────────────────────────────────────────────────
 
-export type MessageSender = "system" | "npc";
+export type ScamCategory =
+  | "phishing"
+  | "honeypot"
+  | "social-engineering"
+  | "smart-contract"
+  | "rug-pull";
 
-export type ScenarioMessage = {
-  sender: MessageSender;
+export type DeliveryChannel =
+  | "notification"
+  | "dm"
+  | "activity-feed"
+  | "approval-popup"
+  | "npc-conversation";
+
+export type ChoiceOutcome =
+  | "rekt"
+  | "survived"
+  | "clue"
+  | "hint"
+  | "continue"
+  | "approval-popup";
+
+export interface ScenarioMessage {
+  id: string;
+  sender: "npc" | "system" | "player";
+  senderName?: string;
+  senderAvatar?: string;
   text: string;
-};
+  delay?: number;
+}
 
-export type ChoiceOutcome = "rekt" | "survived" | "clue" | "hint";
-
-export type ScenarioChoice = {
+export interface ScenarioChoice {
   id: string;
   text: string;
+  emoji: string;
   outcome: ChoiceOutcome;
-  next?: string; // step ID to advance to for "clue" outcomes
-};
+  nextNodeId?: string;
+  xpReward?: number;
+  statChange?: { stat: string; amount: number };
+  revealText?: string;
+  damageAmount?: number;
+}
 
-export type ApprovalPopupData = {
-  type: "safe" | "scam";
-  actionTitle: string;
-  amount: string;
-  contract: string;
-  verified: boolean;
-  gas: string;
-};
-
-export type ScenarioStep = {
+export interface ScenarioNode {
   id: string;
   messages: ScenarioMessage[];
   choices: ScenarioChoice[];
-  approval?: ApprovalPopupData;
-};
+  isEnd?: boolean;
+}
 
-export type ScenarioEducation = {
-  title: string;
-  summary: string;
-  category?: string;
-  difficulty?: number;
-  steps: string[];
+export interface ScenarioEducation {
+  attackName: string;
+  difficulty: string;
+  category: ScamCategory;
+  howItWorked: Array<{ step: number; text: string; highlight?: string }>;
   redFlags: string[];
-  irlTips: string[];
-  tip: string;
-};
+  irlProtection: string[];
+}
 
-export type ScenarioData = {
+export interface ScenarioDefinition {
   id: string;
   chapter: number;
-  difficulty: number;
-  type: string;
+  scenarioIndex: number;
   title: string;
   subtitle: string;
   icon: string;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  category: ScamCategory;
+  deliveryChannel: DeliveryChannel;
   npcAvatar: string;
   npcName: string;
-  steps: ScenarioStep[];
-  hints: string[];
+  isBoss: boolean;
+
+  // Dialogue tree
+  nodes: ScenarioNode[];
+
+  // Passive clues
+  passiveClues: string[];
+
+  // Active investigation options
+  activeInvestigations: Array<{
+    type:
+      | "inspect-link"
+      | "check-contract"
+      | "verify-identity"
+      | "search-news"
+      | "ask-sensei";
+    result: string;
+    cost?: number;
+  }>;
+
+  // Education content
   education: ScenarioEducation;
-};
 
-/* ── Chat message (rendered in UI) ─────────────────────────────────────────── */
+  // Rewards/Consequences
+  rektConsequences: {
+    moneyLost: number;
+    moneyLostType: "fixed" | "percentage";
+    hpLost: number;
+    streakBroken: boolean;
+  };
+  survivedRewards: {
+    xp: number;
+    securityTokens: number;
+    coins: number;
+    statBoosts: Array<{ stat: string; amount: number }>;
+  };
 
-export type ChatMessage = {
-  id: string;
-  sender: MessageSender | "hint";
-  text: string;
-};
+  // Stats
+  communityRektRate: number;
+}
 
-/* ── Store ─────────────────────────────────────────────────────────────────── */
+// ── Runtime State ───────────────────────────────────────────────────────────────
 
-type ScenarioState = {
-  scenario: ScenarioData | null;
-  currentStepId: string;
-  chatHistory: ChatMessage[];
-  hintsUsed: number;
-  maxHints: number;
+export interface ScenarioState {
+  // Current scenario
+  activeScenario: ScenarioDefinition | null;
+  currentNodeId: string;
+
+  // Dialogue state
+  visibleMessages: ScenarioMessage[];
+  isTyping: boolean;
+
+  // Player state within scenario
+  choicesMade: string[];
+  cluesDiscovered: string[];
+  senseiUsesLeft: number;
+
+  // Outcome
   outcome: "rekt" | "survived" | null;
-  showChoices: boolean;
+  outcomeDetails: {
+    choiceThatCausedIt: string;
+    amountLost?: number;
+    amountSaved?: number;
+    attackType?: string;
+  } | null;
 
-  loadScenario: (data: ScenarioData) => void;
-  selectChoice: (choice: ScenarioChoice) => void;
-  reset: () => void;
+  // UI helpers
+  choicesVisible: boolean;
+  approvalPopupVisible: boolean;
+  messageRevealIndex: number;
+}
+
+interface ScenarioActions {
+  // Scenario lifecycle
+  loadScenario: (scenarioId: string) => void;
+  startScenario: () => void;
+  getCurrentNode: () => ScenarioNode | null;
+
+  // Dialogue progression
+  revealNextMessage: () => void;
+  showChoices: () => void;
+
+  // Player actions
+  selectChoice: (choiceId: string) => void;
+
+  // Investigation
+  performInvestigation: (type: string) => void;
+
+  // Outcome processing
+  processRekt: () => void;
+  processSurvived: () => void;
+
+  // Education
+  getEducation: () => ScenarioEducation | null;
+
+  // Reset
+  resetScenario: () => void;
+}
+
+// ── Scenario Registry ───────────────────────────────────────────────────────────
+// Register scenario definitions here so loadScenario(id) can find them.
+
+const scenarioRegistry = new Map<string, ScenarioDefinition>();
+
+export function registerScenario(scenario: ScenarioDefinition): void {
+  scenarioRegistry.set(scenario.id, scenario);
+}
+
+export function registerScenarios(scenarios: ScenarioDefinition[]): void {
+  for (const s of scenarios) {
+    scenarioRegistry.set(s.id, s);
+  }
+}
+
+export function getRegisteredScenario(
+  id: string,
+): ScenarioDefinition | undefined {
+  return scenarioRegistry.get(id);
+}
+
+// ── Initial State ───────────────────────────────────────────────────────────────
+
+const INITIAL_STATE: ScenarioState = {
+  activeScenario: null,
+  currentNodeId: "",
+
+  visibleMessages: [],
+  isTyping: false,
+
+  choicesMade: [],
+  cluesDiscovered: [],
+  senseiUsesLeft: 2,
+
+  outcome: null,
+  outcomeDetails: null,
+
+  choicesVisible: false,
+  approvalPopupVisible: false,
+  messageRevealIndex: 0,
 };
 
-export const useScenarioStore = create<ScenarioState>((set, get) => ({
-  scenario: null,
-  currentStepId: "",
-  chatHistory: [],
-  hintsUsed: 0,
-  maxHints: 2,
-  outcome: null,
-  showChoices: false,
+// ── Store ───────────────────────────────────────────────────────────────────────
 
-  loadScenario: (data) => {
-    const firstStep = data.steps[0];
-    if (!firstStep) return;
+export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
+  (set, get) => ({
+    ...INITIAL_STATE,
 
-    const initialMessages: ChatMessage[] = firstStep.messages.map((m, i) => ({
-      id: `${firstStep.id}-${i}`,
-      sender: m.sender,
-      text: m.text,
-    }));
+    // ── Scenario Lifecycle ──────────────────────────────────────────────
 
-    set({
-      scenario: data,
-      currentStepId: firstStep.id,
-      chatHistory: initialMessages,
-      hintsUsed: 0,
-      outcome: null,
-      showChoices: true,
-    });
-  },
+    loadScenario: (scenarioId) => {
+      const scenario = scenarioRegistry.get(scenarioId);
+      if (!scenario) return;
 
-  selectChoice: (choice) => {
-    const { scenario, chatHistory, hintsUsed, maxHints, currentStepId } = get();
-    if (!scenario) return;
-
-    // ── Hint ──────────────────────────────────────────────────────────
-    if (choice.outcome === "hint") {
-      if (hintsUsed >= maxHints) return;
-      const hintText = scenario.hints[hintsUsed] ?? "No more hints available.";
       set({
-        chatHistory: [
-          ...chatHistory,
-          { id: `hint-${hintsUsed}`, sender: "hint", text: `🧠 Sensei: ${hintText}` },
-        ],
-        hintsUsed: hintsUsed + 1,
+        ...INITIAL_STATE,
+        activeScenario: scenario,
+        currentNodeId: scenario.nodes[0]?.id ?? "",
+        senseiUsesLeft: 2,
       });
-      return;
-    }
+    },
 
-    // Add player's choice as a visible message
-    const updatedChat: ChatMessage[] = [
-      ...chatHistory,
-      { id: `choice-${choice.id}`, sender: "system", text: `You chose: ${choice.text}` },
-    ];
+    startScenario: () => {
+      const { activeScenario } = get();
+      if (!activeScenario) return;
 
-    // ── Terminal outcomes ─────────────────────────────────────────────
-    if (choice.outcome === "rekt" || choice.outcome === "survived") {
+      const firstNode = activeScenario.nodes[0];
+      if (!firstNode) return;
+
+      // Reveal all messages from the first node immediately
       set({
-        chatHistory: updatedChat,
-        outcome: choice.outcome,
-        showChoices: false,
+        currentNodeId: firstNode.id,
+        visibleMessages: [...firstNode.messages],
+        messageRevealIndex: firstNode.messages.length,
+        isTyping: false,
+        choicesVisible: true,
       });
-      return;
-    }
+    },
 
-    // ── Clue — advance to next step ──────────────────────────────────
-    if (choice.outcome === "clue" && choice.next) {
-      const nextStep = scenario.steps.find((s) => s.id === choice.next);
-      if (!nextStep) return;
+    getCurrentNode: () => {
+      const { activeScenario, currentNodeId } = get();
+      if (!activeScenario) return null;
+      return (
+        activeScenario.nodes.find((n) => n.id === currentNodeId) ?? null
+      );
+    },
 
-      const newMessages: ChatMessage[] = nextStep.messages.map((m, i) => ({
-        id: `${nextStep.id}-${i}`,
-        sender: m.sender,
-        text: m.text,
+    // ── Dialogue Progression ────────────────────────────────────────────
+
+    revealNextMessage: () => {
+      const node = get().getCurrentNode();
+      if (!node) return;
+
+      const idx = get().messageRevealIndex;
+      if (idx >= node.messages.length) return;
+
+      const nextMsg = node.messages[idx];
+      const isLast = idx + 1 >= node.messages.length;
+
+      set((s) => ({
+        visibleMessages: [...s.visibleMessages, nextMsg],
+        messageRevealIndex: idx + 1,
+        isTyping: !isLast,
+        choicesVisible: isLast,
       }));
+    },
 
-      set({
-        currentStepId: nextStep.id,
-        chatHistory: [...updatedChat, ...newMessages],
-        showChoices: true,
+    showChoices: () => {
+      set({ choicesVisible: true, isTyping: false });
+    },
+
+    // ── Player Actions ──────────────────────────────────────────────────
+
+    selectChoice: (choiceId) => {
+      const { activeScenario, visibleMessages, senseiUsesLeft } = get();
+      if (!activeScenario) return;
+
+      const node = get().getCurrentNode();
+      if (!node) return;
+
+      const choice = node.choices.find((c) => c.id === choiceId);
+      if (!choice) return;
+
+      // Track choice
+      set((s) => ({ choicesMade: [...s.choicesMade, choiceId] }));
+
+      // Player's message bubble
+      const playerMsg: ScenarioMessage = {
+        id: `player-${choiceId}`,
+        sender: "player",
+        text: `${choice.emoji} ${choice.text}`,
+      };
+
+      switch (choice.outcome) {
+        case "rekt": {
+          const moneyLost =
+            choice.damageAmount ?? activeScenario.rektConsequences.moneyLost;
+
+          set({
+            visibleMessages: [...visibleMessages, playerMsg],
+            outcome: "rekt",
+            outcomeDetails: {
+              choiceThatCausedIt: choiceId,
+              amountLost: moneyLost,
+              attackType: activeScenario.education.attackName,
+            },
+            choicesVisible: false,
+            approvalPopupVisible: false,
+          });
+          break;
+        }
+
+        case "survived": {
+          set({
+            visibleMessages: [...visibleMessages, playerMsg],
+            outcome: "survived",
+            outcomeDetails: {
+              choiceThatCausedIt: choiceId,
+              amountSaved: usePortfolioStore.getState().totalValue,
+              attackType: activeScenario.education.attackName,
+            },
+            choicesVisible: false,
+            approvalPopupVisible: false,
+          });
+          break;
+        }
+
+        case "clue": {
+          const clueMsg: ScenarioMessage = {
+            id: `clue-${choiceId}`,
+            sender: "system",
+            text: choice.revealText ?? "No additional information.",
+          };
+          set((s) => ({
+            visibleMessages: [...visibleMessages, playerMsg, clueMsg],
+            cluesDiscovered: [
+              ...s.cluesDiscovered,
+              choice.revealText ?? "",
+            ],
+          }));
+          break;
+        }
+
+        case "hint": {
+          if (senseiUsesLeft <= 0) return;
+
+          const hintMsg: ScenarioMessage = {
+            id: `hint-${choiceId}`,
+            sender: "system",
+            senderName: "Sensei",
+            text: `\uD83E\uDDE0 ${choice.revealText ?? "Trust your instincts."}`,
+          };
+          set((s) => ({
+            visibleMessages: [...s.visibleMessages, playerMsg, hintMsg],
+            senseiUsesLeft: s.senseiUsesLeft - 1,
+          }));
+          break;
+        }
+
+        case "continue": {
+          if (!choice.nextNodeId) return;
+
+          const nextNode = activeScenario.nodes.find(
+            (n) => n.id === choice.nextNodeId,
+          );
+          if (!nextNode) return;
+
+          // Apply immediate rewards for intermediate choices
+          if (choice.xpReward) {
+            usePlayerStore.getState().addXP(choice.xpReward);
+          }
+          if (choice.statChange) {
+            usePlayerStore
+              .getState()
+              .updateStat(
+                choice.statChange.stat as "security" | "detection" | "wealth" | "knowledge" | "hp",
+                choice.statChange.amount,
+              );
+          }
+
+          set({
+            currentNodeId: choice.nextNodeId,
+            visibleMessages: [
+              ...visibleMessages,
+              playerMsg,
+              ...nextNode.messages,
+            ],
+            messageRevealIndex: nextNode.messages.length,
+            isTyping: false,
+            choicesVisible: !nextNode.isEnd,
+          });
+          break;
+        }
+
+        case "approval-popup": {
+          set({
+            visibleMessages: [...visibleMessages, playerMsg],
+            approvalPopupVisible: true,
+            choicesVisible: false,
+          });
+          break;
+        }
+      }
+    },
+
+    // ── Investigation ───────────────────────────────────────────────────
+
+    performInvestigation: (type) => {
+      const { activeScenario } = get();
+      if (!activeScenario) return;
+
+      const investigation = activeScenario.activeInvestigations.find(
+        (inv) => inv.type === type,
+      );
+      if (!investigation) return;
+
+      // Check if already discovered
+      if (get().cluesDiscovered.includes(investigation.result)) return;
+
+      // Deduct cost if applicable (uses sensei charges as currency)
+      if (investigation.cost && investigation.cost > 0) {
+        const { senseiUsesLeft } = get();
+        if (senseiUsesLeft < investigation.cost) return;
+        set((s) => ({
+          senseiUsesLeft: s.senseiUsesLeft - investigation.cost!,
+        }));
+      }
+
+      const resultMsg: ScenarioMessage = {
+        id: `investigate-${type}`,
+        sender: "system",
+        text: `\uD83D\uDD0D ${investigation.result}`,
+      };
+
+      set((s) => ({
+        visibleMessages: [...s.visibleMessages, resultMsg],
+        cluesDiscovered: [...s.cluesDiscovered, investigation.result],
+      }));
+    },
+
+    // ── Outcome Processing ──────────────────────────────────────────────
+
+    processRekt: () => {
+      const { activeScenario, outcomeDetails } = get();
+      if (!activeScenario || !outcomeDetails) return;
+
+      const consequences = activeScenario.rektConsequences;
+      const player = usePlayerStore.getState();
+      const portfolio = usePortfolioStore.getState();
+
+      // Apply HP loss
+      player.takeDamage(consequences.hpLost);
+
+      // Apply money loss
+      if (consequences.moneyLostType === "fixed") {
+        portfolio.drainFunds(
+          consequences.moneyLost,
+          `REKT: ${activeScenario.title}`,
+        );
+      } else {
+        const amount = portfolio.totalValue * (consequences.moneyLost / 100);
+        portfolio.drainFunds(amount, `REKT: ${activeScenario.title}`);
+      }
+
+      // Add loss transaction
+      portfolio.addTransaction({
+        type: "rekt-loss",
+        label: `REKT: ${activeScenario.title}`,
+        sublabel: activeScenario.education.attackName,
+        amount: -(outcomeDetails.amountLost ?? 0),
+        isSuspicious: true,
+        linkedScenarioId: activeScenario.id,
       });
-    }
-  },
 
-  reset: () =>
-    set({
-      scenario: null,
-      currentStepId: "",
-      chatHistory: [],
-      hintsUsed: 0,
-      outcome: null,
-      showChoices: false,
-    }),
-}));
+      // Break streak if specified
+      if (consequences.streakBroken) {
+        player.breakStreak();
+      }
+
+      // Record rekt in player stats
+      player.recordRekt();
+      player.completeScenario(activeScenario.id);
+    },
+
+    processSurvived: () => {
+      const { activeScenario } = get();
+      if (!activeScenario) return;
+
+      const rewards = activeScenario.survivedRewards;
+      const player = usePlayerStore.getState();
+      const portfolio = usePortfolioStore.getState();
+
+      // Apply XP
+      player.addXP(rewards.xp);
+
+      // Apply security tokens
+      player.addSecurityTokens(rewards.securityTokens);
+
+      // Apply coins
+      player.addCoins(rewards.coins);
+
+      // Apply stat boosts
+      for (const boost of rewards.statBoosts) {
+        player.updateStat(
+          boost.stat as "security" | "detection" | "wealth" | "knowledge" | "hp",
+          boost.amount,
+        );
+      }
+
+      // Add reward transaction
+      portfolio.addTransaction({
+        type: "received",
+        label: `Survived: ${activeScenario.title}`,
+        sublabel: `+${rewards.xp} XP, +${rewards.coins} coins`,
+        amount: rewards.coins,
+        isSuspicious: false,
+        linkedScenarioId: activeScenario.id,
+      });
+
+      // Record survived in player stats
+      player.recordSurvive();
+      player.completeScenario(activeScenario.id);
+    },
+
+    // ── Education ───────────────────────────────────────────────────────
+
+    getEducation: () => {
+      const { activeScenario } = get();
+      return activeScenario?.education ?? null;
+    },
+
+    // ── Reset ───────────────────────────────────────────────────────────
+
+    resetScenario: () => set({ ...INITIAL_STATE }),
+  }),
+);
